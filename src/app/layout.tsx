@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Geist } from "next/font/google";
 
+import SettingsRadialMenu from "@/components/organisms/floating-menu/SettingsRadialMenu";
 import Navbar from "@/components/organisms/navbar/Navbar";
 
+import Providers from "./providers";
 import "./globals.css";
 
 const geist = Geist({
@@ -40,11 +42,18 @@ export default function RootLayout({
   children,
 }: Readonly<RootLayoutProps>) {
   return (
-    <html lang="es">
+    <html
+      lang="es"
+      suppressHydrationWarning
+    >
       <body className={geist.className}>
-        <Navbar />
+        <Providers>
+          <Navbar />
 
-        {children}
+          <SettingsRadialMenu />
+
+          {children}
+        </Providers>
       </body>
     </html>
   );
