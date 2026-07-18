@@ -1,26 +1,212 @@
 @import "tailwindcss";
 
+/* =========================================================
+   FIXORA — ESTILOS GLOBALES
+   Configuración inicial: modo claro
+   Tailwind CSS 4
+   ========================================================= */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
+
+  /* Fondo principal */
+  --fixora-background: #f3f6f3;
+
+  /* Superficies */
+  --fixora-surface: rgba(255, 255, 255, 0.9);
+  --fixora-surface-solid: #ffffff;
+  --fixora-surface-hover: #edf6e9;
+  --fixora-surface-active: #e3f2dd;
+
+  /* Bordes */
+  --fixora-border: rgba(26, 34, 28, 0.1);
+  --fixora-border-strong: rgba(26, 34, 28, 0.16);
+
+  /* Textos */
+  --fixora-text: #171d19;
+  --fixora-text-secondary: #59635c;
+  --fixora-text-muted: #7a847d;
+
+  /* Colores de marca */
+  --fixora-green: #4caf2f;
+  --fixora-green-hover: #3f9728;
+  --fixora-green-strong: #28691d;
+  --fixora-green-soft: #e3f2dd;
+
+  /* Estados */
+  --fixora-active-background: #e3f2dd;
+  --fixora-active-text: #193313;
+  --fixora-focus: #317b22;
+
+  /* Sombras */
+  --fixora-shadow-soft:
+    0 12px 32px rgba(25, 39, 29, 0.09),
+    0 3px 10px rgba(25, 39, 29, 0.05);
+
+  --fixora-shadow-navbar:
+    0 18px 45px rgba(25, 39, 29, 0.11),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+
+  --fixora-shadow-hover:
+    0 12px 28px rgba(76, 175, 47, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92);
+
+  --fixora-shadow-active:
+    0 10px 26px rgba(76, 175, 47, 0.23),
+    inset 0 1px 0 rgba(255, 255, 255, 0.82);
 }
+
+/* =========================================================
+   VARIABLES DISPONIBLES COMO CLASES DE TAILWIND
+   ========================================================= */
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Colores */
+  --color-fixora-background: var(--fixora-background);
+
+  --color-fixora-surface: var(--fixora-surface);
+  --color-fixora-surface-solid: var(--fixora-surface-solid);
+  --color-fixora-surface-hover: var(--fixora-surface-hover);
+  --color-fixora-surface-active: var(--fixora-surface-active);
+
+  --color-fixora-border: var(--fixora-border);
+  --color-fixora-border-strong: var(--fixora-border-strong);
+
+  --color-fixora-text: var(--fixora-text);
+  --color-fixora-text-secondary: var(--fixora-text-secondary);
+  --color-fixora-text-muted: var(--fixora-text-muted);
+
+  --color-fixora-green: var(--fixora-green);
+  --color-fixora-green-hover: var(--fixora-green-hover);
+  --color-fixora-green-strong: var(--fixora-green-strong);
+  --color-fixora-green-soft: var(--fixora-green-soft);
+
+  --color-fixora-active-background: var(
+    --fixora-active-background
+  );
+  --color-fixora-active-text: var(--fixora-active-text);
+  --color-fixora-focus: var(--fixora-focus);
+
+  /* Sombras */
+  --shadow-fixora-soft: var(--fixora-shadow-soft);
+  --shadow-fixora-navbar: var(--fixora-shadow-navbar);
+  --shadow-fixora-hover: var(--fixora-shadow-hover);
+  --shadow-fixora-active: var(--fixora-shadow-active);
+
+  /* Bordes redondeados */
+  --radius-fixora-capsule: 999px;
+  --radius-fixora-panel: 28px;
+
+  /* Animaciones */
+  --ease-fixora-expand: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* =========================================================
+   REINICIO Y CONFIGURACIÓN GENERAL
+   ========================================================= */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  min-height: 100%;
+  scroll-behavior: smooth;
+  background-color: var(--fixora-background);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+
+  background:
+    radial-gradient(
+      circle at 50% -10%,
+      rgba(76, 175, 47, 0.07),
+      transparent 34%
+    ),
+    var(--fixora-background);
+
+  color: var(--fixora-text);
+
+  font-family:
+    Arial,
+    Helvetica,
+    sans-serif;
+
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  overflow-x: hidden;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  border: 0;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img,
+picture,
+svg,
+canvas {
+  display: block;
+  max-width: 100%;
+}
+
+ul,
+ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* =========================================================
+   ACCESIBILIDAD
+   ========================================================= */
+
+:focus-visible {
+  outline: 3px solid var(--fixora-focus);
+  outline-offset: 4px;
+}
+
+::selection {
+  background-color: var(--fixora-green-soft);
+  color: var(--fixora-active-text);
+}
+
+/* Reduce animaciones cuando el usuario lo solicita */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

@@ -1,0 +1,45 @@
+"use client";
+
+import { usePathname } from "next/navigation";
+
+import ExpandableNavItem from "@/components/atoms/navbar/ExpandableNavItem";
+import { navigationItems } from "@/constants/navbar/navigation";
+
+interface NavigationListProps {
+  onNavigate?: () => void;
+}
+
+export default function NavigationList({
+  onNavigate,
+}: Readonly<NavigationListProps>) {
+  const pathname = usePathname();
+
+  const isRouteActive = (href: string): boolean => {
+    if (href === "/") {
+      return pathname === "/";
+    }
+
+    return pathname === href || pathname.startsWith(`${href}/`);
+  };
+
+  return (
+    <ul
+      aria-label="Opciones principales"
+      className={[
+        "flex items-center",
+        "gap-1",
+      ].join(" ")}
+    >
+      {navigationItems.map((item) => (
+        <ExpandableNavItem
+          key={item.href}
+          label={item.label}
+          href={item.href}
+          icon={item.icon}
+          isActive={isRouteActive(item.href)}
+          onNavigate={onNavigate}
+        />
+      ))}
+    </ul>
+  );
+}
