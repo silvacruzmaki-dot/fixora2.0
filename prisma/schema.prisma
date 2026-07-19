@@ -1,0 +1,246 @@
+// =========================================================
+// FIXORA — ESQUEMA PRINCIPAL DE BASE DE DATOS
+// Prisma ORM 7 + Microsoft SQL Server
+// =========================================================
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+
+  engineType = "client"
+  runtime    = "nodejs"
+
+  moduleFormat           = "esm"
+  generatedFileExtension = "ts"
+  importFileExtension    = "ts"
+}
+
+datasource db {
+  provider = "sqlserver"
+}
+
+// =========================================================
+// USUARIOS
+// =========================================================
+
+model User {
+  id String @id @default(uuid(7)) @db.UniqueIdentifier
+
+  firstName   String @db.NVarChar(80)
+  lastName    String @db.NVarChar(80)
+  displayName String @db.NVarChar(80)
+
+  email        String @unique(map: "users_email_key") @db.NVarChar(320)
+  passwordHash String @db.NVarChar(255)
+
+  avatarUrl String? @db.NVarChar(2048)
+
+  // USER | ADMIN
+  role String @default("USER") @db.NVarChar(20)
+
+  // PENDING_VERIFICATION | ACTIVE | LOCKED | DISABLED
+  status String @default("PENDING_VERIFICATION") @db.NVarChar(32)
+
+  // es | en
+  preferredLanguage String @default("es") @db.NVarChar(5)
+
+  // light | dark | system
+  preferredTheme String @default("light") @db.NVarChar(10)
+
+  emailVerifiedAt   DateTime? @db.DateTime2
+  passwordChangedAt DateTime  @default(now()) @db.DateTime2
+
+  failedLoginAttempts Int @default(0) @map("failedLoginCount")
+
+  lockedUntil DateTime? @db.DateTime2
+  lastLoginAt DateTime? @db.DateTime2
+
+  termsAcceptedAt   DateTime? @db.DateTime2
+  privacyAcceptedAt DateTime? @db.DateTime2
+
+  deletedAt DateTime? @db.DateTime2
+  createdAt DateTime  @default(now()) @db.DateTime2
+  updatedAt DateTime  @updatedAt @db.DateTime2
+
+  sessions      Session[]
+  authCodes     AuthCode[]
+  notifications Notification[]
+  authAttempts  AuthAttempt[]
+
+  auditLogsAsActor   AuditLog[] @relation("AuditActor")
+  auditLogsAsSubject AuditLog[] @relation("AuditSubject")
+
+  @@index([role, status], map: "users_role_status_idx")
+  @@index([displayName], map: "users_display_name_idx")
+  @@index([status, lockedUntil], map: "users_status_locked_until_idx")
+  @@index([createdAt], map: "users_created_at_idx")
+  @@map("users")
+}
+
+// =========================================================
+// SESIONES SEGURAS
+// =========================================================
+
+model Session {
+  id String @id @default(uuid(7)) @db.UniqueIdentifier
+
+  userId String @db.UniqueIdentifier
+
+  tokenHash String @unique(map: "sessions_token_hash_key") @db.Char(64)
+
+  ipHash     String? @db.Char(64)
+  userAgent  String? @db.NVarChar(512)
+  deviceName String? @db.NVarChar(160)
+
+  rememberMe Boolean @default(false)
+
+  expiresAt  DateTime  @db.DateTime2
+  lastSeenAt DateTime  @default(now()) @db.DateTime2
+  revokedAt  DateTime? @db.DateTime2
+  createdAt  DateTime  @default(now()) @db.DateTime2
+  updatedAt  DateTime  @updatedAt @db.DateTime2
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([userId, revokedAt, expiresAt], map: "sessions_user_status_idx")
+  @@index([expiresAt], map: "sessions_expires_at_idx")
+  @@index([lastSeenAt], map: "sessions_last_seen_at_idx")
+  @@map("sessions")
+}
+
+// =========================================================
+// CÓDIGOS DE VERIFICACIÓN Y RECUPERACIÓN
+// =========================================================
+
+model AuthCode {
+  id String @id @default(uuid(7)) @db.UniqueIdentifier
+
+  userId String @db.UniqueIdentifier
+
+  email String? @db.NVarChar(320)
+
+  // EMAIL_VERIFICATION | PASSWORD_RESET
+  purpose String @db.NVarChar(40)
+
+  codeHash String @db.Char(64)
+
+  attemptCount Int @default(0) @map("attempts")
+
+  maxAttempts Int @default(5)
+
+  resendCount Int @default(0)
+
+  lastSentAt DateTime @default(now()) @db.DateTime2
+
+  expiresAt DateTime @db.DateTime2
+
+  resendAvailableAt DateTime? @db.DateTime2
+
+  consumedAt DateTime? @map("usedAt") @db.DateTime2
+
+  createdAt DateTime @default(now()) @db.DateTime2
+  updatedAt DateTime @updatedAt @db.DateTime2
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([userId, purpose, consumedAt, expiresAt], map: "auth_codes_user_purpose_idx")
+  @@index([email, purpose, createdAt], map: "auth_codes_email_purpose_idx")
+  @@index([expiresAt], map: "auth_codes_expires_at_idx")
+  @@index([consumedAt], map: "auth_codes_consumed_at_idx")
+  @@index([userId, purpose, lastSentAt], map: "auth_codes_user_last_sent_idx")
+  @@map("auth_codes")
+}
+
+// =========================================================
+// NOTIFICACIONES
+// =========================================================
+
+model Notification {
+  id String @id @default(uuid(7)) @db.UniqueIdentifier
+
+  userId String @db.UniqueIdentifier
+
+  // ACCOUNT | SECURITY | PROJECT | SERVICE | SYSTEM
+  type String @db.NVarChar(40)
+
+  titleEs String @db.NVarChar(180)
+  titleEn String @db.NVarChar(180)
+
+  messageEs String @db.NVarChar(1000)
+  messageEn String @db.NVarChar(1000)
+
+  actionUrl String? @db.NVarChar(2048)
+
+  readAt    DateTime? @db.DateTime2
+  createdAt DateTime  @default(now()) @db.DateTime2
+  updatedAt DateTime  @updatedAt @db.DateTime2
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([userId, readAt, createdAt], map: "notifications_user_read_idx")
+  @@index([userId, type], map: "notifications_user_type_idx")
+  @@map("notifications")
+}
+
+// =========================================================
+// INTENTOS DE AUTENTICACIÓN
+// =========================================================
+
+model AuthAttempt {
+  id String @id @default(uuid(7)) @db.UniqueIdentifier
+
+  userId String? @db.UniqueIdentifier
+  email  String  @db.NVarChar(320)
+
+  // LOGIN | REGISTER | EMAIL_VERIFICATION | PASSWORD_RESET
+  action String @db.NVarChar(40)
+
+  success Boolean
+
+  reason String? @db.NVarChar(80)
+
+  ipHash    String? @db.Char(64)
+  userAgent String? @db.NVarChar(512)
+
+  createdAt DateTime @default(now()) @db.DateTime2
+
+  user User? @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([email, action, createdAt], map: "auth_attempts_email_action_idx")
+  @@index([ipHash, action, createdAt], map: "auth_attempts_ip_action_idx")
+  @@index([userId, createdAt], map: "auth_attempts_user_created_idx")
+  @@map("auth_attempts")
+}
+
+// =========================================================
+// REGISTRO DE AUDITORÍA
+// =========================================================
+
+model AuditLog {
+  id String @id @default(uuid(7)) @db.UniqueIdentifier
+
+  actorUserId   String? @db.UniqueIdentifier
+  subjectUserId String? @db.UniqueIdentifier
+
+  action String @db.NVarChar(100)
+
+  entityType String? @db.NVarChar(60)
+  entityId   String? @db.NVarChar(64)
+
+  ipHash    String? @db.Char(64)
+  userAgent String? @db.NVarChar(512)
+
+  detailsText String? @db.NVarChar(2000)
+
+  createdAt DateTime @default(now()) @db.DateTime2
+
+  actorUser User? @relation("AuditActor", fields: [actorUserId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  subjectUser User? @relation("AuditSubject", fields: [subjectUserId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([actorUserId, createdAt], map: "audit_logs_actor_created_idx")
+  @@index([subjectUserId, createdAt], map: "audit_logs_subject_created_idx")
+  @@index([action, createdAt], map: "audit_logs_action_created_idx")
+  @@index([entityType, entityId], map: "audit_logs_entity_idx")
+  @@map("audit_logs")
+}

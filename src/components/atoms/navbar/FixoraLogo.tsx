@@ -3,7 +3,7 @@ import Image from "next/image";
 export default function FixoraLogo() {
   return (
     <Image
-      src="/brand/fixora-symbol.png"
+      src="/brand/fixoraLogo.png"
       alt="FIXORA"
       width={50}
       height={50}

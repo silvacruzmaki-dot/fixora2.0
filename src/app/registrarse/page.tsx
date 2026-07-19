@@ -4,10 +4,10 @@ import { AuthCard } from "@/components/organisms/auth/AuthCard";
 import { AuthPageShell } from "@/components/organisms/auth/AuthPageShell";
 
 export const metadata: Metadata = {
-  title: "FIXORA | Acceso / Access",
+  title: "FIXORA | Registro / Sign up",
 
   description:
-    "Accede a tu cuenta FIXORA o crea una nueva. Sign in to your FIXORA account or create a new one.",
+    "Crea tu cuenta FIXORA. Create your FIXORA account.",
 
   robots: {
     index: false,
@@ -18,14 +18,14 @@ export const metadata: Metadata = {
 /*
  * Esta página permanece como Server Component.
  *
- * Las animaciones, formularios, cambio de idioma,
- * cambio de tema y estados interactivos estarán
- * dentro de AuthPageShell y AuthCard.
+ * El formulario, la validación, las animaciones,
+ * el cambio de idioma y el cambio de tema estarán
+ * dentro de los componentes de autenticación.
  */
-export default function LoginPage() {
+export default function RegisterPage() {
   return (
     <AuthPageShell>
-      <AuthCard initialMode="login" />
+      <AuthCard initialMode="register" />
     </AuthPageShell>
   );
 }
