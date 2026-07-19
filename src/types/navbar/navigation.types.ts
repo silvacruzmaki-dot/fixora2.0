@@ -1,12 +1,22 @@
 import type { IconType } from "react-icons";
 
+import type { LanguageTranslations } from "@/types/language/language.types";
+
+export type NavbarTranslationKey = Exclude<
+  keyof LanguageTranslations["navbar"],
+  "login"
+>;
+
 export interface NavigationItem {
-  label: string;
+  translationKey: NavbarTranslationKey;
   href: string;
   icon: IconType;
 }
 
-export interface ExpandableNavItemProps extends NavigationItem {
+export interface ExpandableNavItemProps {
+  label: string;
+  href: string;
+  icon: IconType;
   isActive: boolean;
   onNavigate?: () => void;
 }

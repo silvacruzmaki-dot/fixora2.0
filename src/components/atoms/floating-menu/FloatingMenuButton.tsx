@@ -2,26 +2,32 @@
 
 import { FiMoreVertical, FiX } from "react-icons/fi";
 
+import useLanguage from "@/hooks/language/useLanguage";
 import type { FloatingMenuButtonProps } from "@/types/floating-menu/floatingMenu.types";
 
 export default function FloatingMenuButton({
   isOpen,
   onToggle,
 }: Readonly<FloatingMenuButtonProps>) {
-  const Icon = isOpen ? FiX : FiMoreVertical;
+  const { t } = useLanguage();
+
+  const Icon = isOpen
+    ? FiX
+    : FiMoreVertical;
+
+  const buttonLabel = isOpen
+    ? t.floatingMenu.closeMenu
+    : t.floatingMenu.openMenu;
 
   return (
     <button
       type="button"
       onClick={onToggle}
-      aria-label={
-        isOpen
-          ? "Cerrar menú de configuración"
-          : "Abrir menú de configuración"
-      }
+      aria-label={buttonLabel}
       aria-expanded={isOpen}
       aria-controls="fixora-radial-menu"
       className={[
+        "group",
         "relative z-20",
         "flex h-14 w-14",
         "items-center justify-center",

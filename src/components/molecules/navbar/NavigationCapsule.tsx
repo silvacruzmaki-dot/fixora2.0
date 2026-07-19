@@ -1,9 +1,14 @@
+"use client";
+
 import NavigationList from "@/components/molecules/navbar/NavigationList";
+import useLanguage from "@/hooks/language/useLanguage";
 
 export default function NavigationCapsule() {
+  const { t } = useLanguage();
+
   return (
     <nav
-      aria-label="Navegación principal"
+      aria-label={t.navigation.primary}
       className={[
         "isolate",
         "flex min-h-16 w-fit shrink-0",

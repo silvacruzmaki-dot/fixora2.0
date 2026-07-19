@@ -13,42 +13,42 @@ import type { NavigationItem } from "@/types/navbar/navigation.types";
 
 export const navigationItems: NavigationItem[] = [
   {
-    label: "Inicio",
+    translationKey: "home",
     href: "/",
     icon: FiHome,
   },
   {
-    label: "Diseño",
+    translationKey: "design",
     href: "/diseno",
     icon: FiPenTool,
   },
   {
-    label: "Proyectos",
+    translationKey: "projects",
     href: "/proyectos",
     icon: FiFolder,
   },
   {
-    label: "Software",
+    translationKey: "software",
     href: "/software",
     icon: FiMonitor,
   },
   {
-    label: "Hardware",
+    translationKey: "hardware",
     href: "/hardware",
     icon: FiCpu,
   },
   {
-    label: "Servicios",
+    translationKey: "services",
     href: "/servicios",
     icon: FiTool,
   },
   {
-    label: "Nosotros",
+    translationKey: "about",
     href: "/nosotros",
     icon: FiUsers,
   },
   {
-    label: "Contacto",
+    translationKey: "contact",
     href: "/contacto",
     icon: FiMail,
   },

@@ -6,14 +6,19 @@ import { useRouter } from "next/navigation";
 import FloatingMenuButton from "@/components/atoms/floating-menu/FloatingMenuButton";
 import FloatingMenuOverlay from "@/components/atoms/floating-menu/FloatingMenuOverlay";
 import RadialMenuWheel from "@/components/molecules/floating-menu/RadialMenuWheel";
+
 import useFloatingMenu from "@/hooks/floating-menu/useFloatingMenu";
 import useRadialRotation from "@/hooks/floating-menu/useRadialRotation";
+import useLanguage from "@/hooks/language/useLanguage";
+
 import type { FloatingMenuItem } from "@/types/floating-menu/floatingMenu.types";
 
 const MOBILE_MENU_RADIUS = 92;
 
 export default function MobileRadialMenu() {
   const router = useRouter();
+
+  const { t } = useLanguage();
 
   const {
     isOpen,
@@ -35,18 +40,9 @@ export default function MobileRadialMenu() {
         return;
       }
 
-      if (item.action === "change-language") {
-        /*
-         * Esta acción se conectará posteriormente
-         * con el selector de idiomas.
-         */
-        closeMenu();
-        return;
-      }
-
       if (item.action === "logout") {
         /*
-         * Esta acción se conectará posteriormente
+         * Se conectará posteriormente
          * con el sistema de autenticación.
          */
         closeMenu();
@@ -63,12 +59,16 @@ export default function MobileRadialMenu() {
       />
 
       <section
-        aria-label="Configuración rápida"
+        aria-label={t.floatingMenu.quickSettings}
         onTouchStart={
-          isOpen ? handleTouchStart : undefined
+          isOpen
+            ? handleTouchStart
+            : undefined
         }
         onTouchMove={
-          isOpen ? handleTouchMove : undefined
+          isOpen
+            ? handleTouchMove
+            : undefined
         }
         className={[
           "fixed bottom-5 left-5 z-[80]",

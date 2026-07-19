@@ -5,6 +5,8 @@ import type {
 
 import type { IconType } from "react-icons";
 
+import type { LanguageTranslations } from "@/types/language/language.types";
+
 /* =========================================================
    ACCIONES DEL MENÚ FLOTANTE
    ========================================================= */
@@ -27,6 +29,18 @@ export type FloatingMenuAccent =
   | "red";
 
 /* =========================================================
+   CLAVES DE TRADUCCIÓN
+   ========================================================= */
+
+export type FloatingMenuTranslationKey = Extract<
+  keyof LanguageTranslations["floatingMenu"],
+  | "settings"
+  | "notifications"
+  | "profile"
+  | "logout"
+>;
+
+/* =========================================================
    POSICIÓN DEL TOOLTIP
    ========================================================= */
 
@@ -40,7 +54,7 @@ export type RadialMenuTooltipPlacement =
 
 export interface FloatingMenuItem {
   id: string;
-  label: string;
+  translationKey: FloatingMenuTranslationKey;
   icon: IconType;
   accent: FloatingMenuAccent;
   href?: string;
@@ -104,6 +118,17 @@ export interface RadialMenuWheelProps {
    ========================================================= */
 
 export interface ThemeRadialButtonProps {
+  isOpen: boolean;
+  angle: number;
+  radius: number;
+  index: number;
+}
+
+/* =========================================================
+   BOTÓN DE IDIOMA
+   ========================================================= */
+
+export interface LanguageRadialButtonProps {
   isOpen: boolean;
   angle: number;
   radius: number;

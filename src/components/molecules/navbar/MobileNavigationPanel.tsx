@@ -6,6 +6,7 @@ import { FiLogIn } from "react-icons/fi";
 
 import NavigationIcon from "@/components/atoms/navbar/NavigationIcon";
 import { navigationItems } from "@/constants/navbar/navigation";
+import useLanguage from "@/hooks/language/useLanguage";
 import type { MobileNavigationPanelProps } from "@/types/navbar/navigation.types";
 
 export default function MobileNavigationPanel({
@@ -13,13 +14,17 @@ export default function MobileNavigationPanel({
   onClose,
 }: Readonly<MobileNavigationPanelProps>) {
   const pathname = usePathname();
+  const { t } = useLanguage();
 
   const isRouteActive = (href: string): boolean => {
     if (href === "/") {
       return pathname === "/";
     }
 
-    return pathname === href || pathname.startsWith(`${href}/`);
+    return (
+      pathname === href ||
+      pathname.startsWith(`${href}/`)
+    );
   };
 
   if (!isOpen) {
@@ -29,18 +34,14 @@ export default function MobileNavigationPanel({
   return (
     <nav
       id="fixora-mobile-navigation"
-      aria-label="Navegación móvil"
+      aria-label={t.mobileNavigation.navigationLabel}
       className={[
-        // Posición: empieza arriba y crece hacia abajo
         "fixed right-4 top-20 z-50",
 
-        // Ancho compacto
         "w-[46vw] min-w-[150px] max-w-[210px]",
 
-        // Un poco más largo que la mitad de la pantalla
         "h-[64dvh] max-h-[620px]",
 
-        // Scroll interno
         "overflow-y-auto overscroll-contain",
 
         "rounded-[20px]",
@@ -54,13 +55,18 @@ export default function MobileNavigationPanel({
       <ul className="flex flex-col gap-0.5">
         {navigationItems.map((item) => {
           const isActive = isRouteActive(item.href);
+          const label =
+            t.navbar[item.translationKey];
 
           return (
             <li key={item.href}>
               <Link
                 href={item.href}
                 onClick={onClose}
-                aria-current={isActive ? "page" : undefined}
+                aria-label={label}
+                aria-current={
+                  isActive ? "page" : undefined
+                }
                 className={[
                   "flex min-h-10 w-full",
                   "items-center gap-2",
@@ -99,13 +105,15 @@ export default function MobileNavigationPanel({
                     icon={item.icon}
                     size={16}
                     className={
-                      isActive ? "text-white" : "text-current"
+                      isActive
+                        ? "text-white"
+                        : "text-current"
                     }
                   />
                 </span>
 
                 <span className="truncate leading-none">
-                  {item.label}
+                  {label}
                 </span>
               </Link>
             </li>
@@ -118,6 +126,7 @@ export default function MobileNavigationPanel({
       <Link
         href="/iniciar-sesion"
         onClick={onClose}
+        aria-label={t.navbar.login}
         className={[
           "flex min-h-10 w-full",
           "items-center justify-center gap-1.5",
@@ -141,7 +150,7 @@ export default function MobileNavigationPanel({
         />
 
         <span className="whitespace-nowrap text-white">
-          Iniciar sesión
+          {t.navbar.login}
         </span>
       </Link>
     </nav>

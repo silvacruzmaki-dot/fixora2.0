@@ -2,19 +2,26 @@
 
 import { FiMenu, FiX } from "react-icons/fi";
 
+import useLanguage from "@/hooks/language/useLanguage";
 import type { MobileMenuButtonProps } from "@/types/navbar/navigation.types";
 
 export default function MobileMenuButton({
   isOpen,
   onToggle,
 }: Readonly<MobileMenuButtonProps>) {
+  const { t } = useLanguage();
+
   const Icon = isOpen ? FiX : FiMenu;
+
+  const buttonLabel = isOpen
+    ? t.mobileNavigation.closeMenu
+    : t.mobileNavigation.openMenu;
 
   return (
     <button
       type="button"
       onClick={onToggle}
-      aria-label={isOpen ? "Cerrar menú de navegación" : "Abrir menú de navegación"}
+      aria-label={buttonLabel}
       aria-expanded={isOpen}
       aria-controls="fixora-mobile-navigation"
       className={[

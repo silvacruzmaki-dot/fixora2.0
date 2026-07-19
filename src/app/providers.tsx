@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 
+import { LanguageProvider } from "@/context/language/LanguageContext";
 import { ThemeProvider } from "@/context/theme/ThemeContext";
 
 interface ProvidersProps {
@@ -13,7 +14,9 @@ export default function Providers({
 }: Readonly<ProvidersProps>) {
   return (
     <ThemeProvider>
-      {children}
+      <LanguageProvider>
+        {children}
+      </LanguageProvider>
     </ThemeProvider>
   );
 }

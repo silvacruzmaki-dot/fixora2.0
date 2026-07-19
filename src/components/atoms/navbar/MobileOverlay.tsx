@@ -1,11 +1,14 @@
 "use client";
 
+import useLanguage from "@/hooks/language/useLanguage";
 import type { MobileOverlayProps } from "@/types/navbar/navigation.types";
 
 export default function MobileOverlay({
   isVisible,
   onClick,
 }: Readonly<MobileOverlayProps>) {
+  const { t } = useLanguage();
+
   if (!isVisible) {
     return null;
   }
@@ -13,7 +16,7 @@ export default function MobileOverlay({
   return (
     <button
       type="button"
-      aria-label="Cerrar menú de navegación"
+      aria-label={t.mobileNavigation.closeMenu}
       onClick={onClick}
       className={[
         "fixed inset-0 z-40",

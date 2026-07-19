@@ -1,13 +1,18 @@
+"use client";
+
 import Link from "next/link";
 import { FiLogIn } from "react-icons/fi";
 
 import NavigationIcon from "@/components/atoms/navbar/NavigationIcon";
+import useLanguage from "@/hooks/language/useLanguage";
 
 export default function LoginButton() {
+  const { t } = useLanguage();
+
   return (
     <Link
       href="/iniciar-sesion"
-      aria-label="Ir a iniciar sesión"
+      aria-label={t.navbar.login}
       style={{ color: "#ffffff" }}
       className={[
         "group",
@@ -37,7 +42,7 @@ export default function LoginButton() {
       />
 
       <span className="whitespace-nowrap text-white">
-        Iniciar sesión
+        {t.navbar.login}
       </span>
     </Link>
   );

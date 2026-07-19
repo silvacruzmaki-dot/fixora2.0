@@ -3,6 +3,7 @@
 import type { CSSProperties } from "react";
 
 import RadialMenuTooltip from "@/components/atoms/floating-menu/RadialMenuTooltip";
+import useLanguage from "@/hooks/language/useLanguage";
 
 import type {
   FloatingMenuAccent,
@@ -74,7 +75,13 @@ export default function RadialMenuItem({
   index,
   onAction,
 }: Readonly<RadialMenuItemProps>) {
-  const angleInRadians = (angle * Math.PI) / 180;
+  const { t } = useLanguage();
+
+  const label =
+    t.floatingMenu[item.translationKey];
+
+  const angleInRadians =
+    (angle * Math.PI) / 180;
 
   const horizontalPosition =
     Math.cos(angleInRadians) * radius;
@@ -101,13 +108,6 @@ export default function RadialMenuItem({
       : `${Math.max(0, 240 - index * 35)}ms`,
   };
 
-  /*
-   * Los iconos ubicados en la parte superior
-   * muestran el mensaje arriba.
-   *
-   * Los iconos ubicados hacia la derecha
-   * muestran el mensaje al costado.
-   */
   const tooltipPlacement: RadialMenuTooltipPlacement =
     angle <= -45 ? "top" : "right";
 
@@ -116,7 +116,7 @@ export default function RadialMenuItem({
   return (
     <button
       type="button"
-      aria-label={item.label}
+      aria-label={label}
       onClick={() => onAction(item)}
       disabled={!isOpen}
       style={itemStyle}
@@ -135,10 +135,6 @@ export default function RadialMenuItem({
         "duration-500",
         "ease-fixora-expand",
 
-        /*
-         * El botón y su tooltip suben por encima
-         * de los demás elementos durante hover o foco.
-         */
         "hover:z-[100]",
         "focus-visible:z-[100]",
 
@@ -165,7 +161,7 @@ export default function RadialMenuItem({
       />
 
       <RadialMenuTooltip
-        label={item.label}
+        label={label}
         placement={tooltipPlacement}
       />
     </button>

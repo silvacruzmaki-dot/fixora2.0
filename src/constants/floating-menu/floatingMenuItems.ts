@@ -1,6 +1,5 @@
 import {
   FiBell,
-  FiGlobe,
   FiLogOut,
   FiSettings,
   FiUser,
@@ -10,16 +9,8 @@ import type { FloatingMenuItem } from "@/types/floating-menu/floatingMenu.types"
 
 export const floatingMenuItems: FloatingMenuItem[] = [
   {
-    id: "language",
-    label: "Idioma",
-    icon: FiGlobe,
-    accent: "teal",
-    action: "change-language",
-    requiresAuth: false,
-  },
-  {
     id: "settings",
-    label: "Ajustes",
+    translationKey: "settings",
     icon: FiSettings,
     accent: "charcoal",
     href: "/ajustes",
@@ -27,7 +18,7 @@ export const floatingMenuItems: FloatingMenuItem[] = [
   },
   {
     id: "notifications",
-    label: "Notificaciones",
+    translationKey: "notifications",
     icon: FiBell,
     accent: "amber",
     href: "/notificaciones",
@@ -35,7 +26,7 @@ export const floatingMenuItems: FloatingMenuItem[] = [
   },
   {
     id: "profile",
-    label: "Perfil",
+    translationKey: "profile",
     icon: FiUser,
     accent: "green",
     href: "/perfil",
@@ -43,7 +34,7 @@ export const floatingMenuItems: FloatingMenuItem[] = [
   },
   {
     id: "logout",
-    label: "Cerrar sesión",
+    translationKey: "logout",
     icon: FiLogOut,
     accent: "red",
     action: "logout",

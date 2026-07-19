@@ -4,6 +4,7 @@ import type { CSSProperties } from "react";
 import { FiMoon, FiSun } from "react-icons/fi";
 
 import RadialMenuTooltip from "@/components/atoms/floating-menu/RadialMenuTooltip";
+import useLanguage from "@/hooks/language/useLanguage";
 import useTheme from "@/hooks/theme/useTheme";
 
 import type {
@@ -22,7 +23,10 @@ export default function ThemeRadialButton({
     toggleTheme,
   } = useTheme();
 
-  const angleInRadians = (angle * Math.PI) / 180;
+  const { t } = useLanguage();
+
+  const angleInRadians =
+    (angle * Math.PI) / 180;
 
   const horizontalPosition =
     Math.cos(angleInRadians) * radius;
@@ -49,16 +53,14 @@ export default function ThemeRadialButton({
       : `${Math.max(0, 240 - index * 35)}ms`,
   };
 
-  const Icon = isDark ? FiSun : FiMoon;
+  const Icon = isDark
+    ? FiSun
+    : FiMoon;
 
   const label = isDark
-    ? "Modo claro"
-    : "Modo oscuro";
+    ? t.floatingMenu.lightMode
+    : t.floatingMenu.darkMode;
 
-  /*
-   * Si el botón está arriba, el mensaje aparece arriba.
-   * Si está hacia la derecha, aparece al costado.
-   */
   const tooltipPlacement: RadialMenuTooltipPlacement =
     angle <= -45 ? "top" : "right";
 

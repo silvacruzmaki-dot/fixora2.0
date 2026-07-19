@@ -1,11 +1,23 @@
 "use client";
 
 import RadialMenuItem from "@/components/atoms/floating-menu/RadialMenuItem";
+import LanguageRadialButton from "@/components/molecules/floating-menu/LanguageRadialButton";
 import ThemeRadialButton from "@/components/molecules/floating-menu/ThemeRadialButton";
 import { floatingMenuItems } from "@/constants/floating-menu/floatingMenuItems";
 import type { RadialMenuWheelProps } from "@/types/floating-menu/floatingMenu.types";
 
-const TOTAL_MENU_ITEMS = floatingMenuItems.length + 1;
+/*
+ * Elementos especiales:
+ * 1. Tema
+ * 2. Idioma
+ *
+ * Luego se agregan los elementos normales.
+ */
+const TOTAL_SPECIAL_ITEMS = 2;
+
+const TOTAL_MENU_ITEMS =
+  floatingMenuItems.length + TOTAL_SPECIAL_ITEMS;
+
 const ROTATION_STEP = 60;
 
 /*
@@ -19,7 +31,8 @@ const VISIBLE_SLOT_ANGLES = [
   0,
 ] as const;
 
-const VISIBLE_ITEMS_COUNT = VISIBLE_SLOT_ANGLES.length;
+const VISIBLE_ITEMS_COUNT =
+  VISIBLE_SLOT_ANGLES.length;
 
 function normalizeIndex(index: number): number {
   return (
@@ -35,17 +48,16 @@ export default function RadialMenuWheel({
   onAction,
 }: Readonly<RadialMenuWheelProps>) {
   /*
-   * Convierte los grados de rotación en pasos enteros.
-   * Cada movimiento desplaza una opción de la rueda.
+   * Convierte los grados de rotación
+   * en pasos enteros.
    */
   const rotationOffset = normalizeIndex(
     Math.round(rotation / ROTATION_STEP),
   );
 
   /*
-   * Obtiene la posición visible de cada elemento.
-   * Si devuelve 0, 1, 2 o 3, aparece en el arco.
-   * Si devuelve 4 o 5, permanece oculto.
+   * Obtiene la posición visible
+   * de cada elemento.
    */
   const getVisibleSlot = (
     itemIndex: number,
@@ -55,9 +67,21 @@ export default function RadialMenuWheel({
     );
   };
 
+  /*
+   * El botón de tema ocupa el índice 0.
+   */
   const themeSlot = getVisibleSlot(0);
+
   const isThemeVisible =
     themeSlot < VISIBLE_ITEMS_COUNT;
+
+  /*
+   * El botón de idioma ocupa el índice 1.
+   */
+  const languageSlot = getVisibleSlot(1);
+
+  const isLanguageVisible =
+    languageSlot < VISIBLE_ITEMS_COUNT;
 
   return (
     <div
@@ -82,12 +106,26 @@ export default function RadialMenuWheel({
         index={themeSlot}
       />
 
+      <LanguageRadialButton
+        isOpen={isOpen && isLanguageVisible}
+        angle={
+          isLanguageVisible
+            ? VISIBLE_SLOT_ANGLES[languageSlot]
+            : 0
+        }
+        radius={radius}
+        index={languageSlot}
+      />
+
       {floatingMenuItems.map((item, index) => {
         /*
-         * El tema ocupa el índice 0.
-         * Los elementos normales comienzan en 1.
+         * Tema ocupa el índice 0.
+         * Idioma ocupa el índice 1.
+         * Los demás elementos comienzan en 2.
          */
-        const itemIndex = index + 1;
+        const itemIndex =
+          index + TOTAL_SPECIAL_ITEMS;
+
         const visibleSlot =
           getVisibleSlot(itemIndex);
 

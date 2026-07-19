@@ -1,11 +1,14 @@
 "use client";
 
+import useLanguage from "@/hooks/language/useLanguage";
 import type { FloatingMenuOverlayProps } from "@/types/floating-menu/floatingMenu.types";
 
 export default function FloatingMenuOverlay({
   isVisible,
   onClick,
 }: Readonly<FloatingMenuOverlayProps>) {
+  const { t } = useLanguage();
+
   if (!isVisible) {
     return null;
   }
@@ -13,7 +16,7 @@ export default function FloatingMenuOverlay({
   return (
     <button
       type="button"
-      aria-label="Cerrar menú de configuración"
+      aria-label={t.floatingMenu.closeMenu}
       onClick={onClick}
       className={[
         "fixed inset-0 z-[70]",

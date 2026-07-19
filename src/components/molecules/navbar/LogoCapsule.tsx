@@ -1,12 +1,17 @@
+"use client";
+
 import Link from "next/link";
 
 import FixoraLogo from "@/components/atoms/navbar/FixoraLogo";
+import useLanguage from "@/hooks/language/useLanguage";
 
 export default function LogoCapsule() {
+  const { t } = useLanguage();
+
   return (
     <Link
       href="/"
-      aria-label="Ir al inicio de FIXORA"
+      aria-label={`${t.navbar.home} FIXORA`}
       className={[
         "group",
         "flex h-16 w-16 shrink-0",
