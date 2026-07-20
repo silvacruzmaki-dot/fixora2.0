@@ -663,10 +663,12 @@ export function AdminLoginCard({
 
   className = "",
 }: AdminLoginCardProps) {
-  const router = useRouter();
+  const router =
+    useRouter();
 
-  const { language } =
-    useLanguage();
+  const {
+    language,
+  } = useLanguage();
 
   const currentLanguage:
     | "es"
@@ -680,21 +682,45 @@ export function AdminLoginCard({
       currentLanguage
     ];
 
-  const [email, setEmail] =
-    useState(
-      initialEmail
-        .trim()
-        .toLowerCase(),
-    );
+  const [
+    email,
+    setEmail,
+  ] = useState(
+    initialEmail
+      .trim()
+      .toLowerCase(),
+  );
 
-  const [password, setPassword] =
-    useState("");
+  const [
+    password,
+    setPassword,
+  ] = useState("");
 
-  const [rememberMe, setRememberMe] =
-    useState(false);
+  /*
+   * Evita que el navegador rellene las credenciales
+   * automáticamente antes de una interacción real.
+   */
+  const [
+    credentialFieldsUnlocked,
+    setCredentialFieldsUnlocked,
+  ] = useState(false);
 
-  const [isSubmitting, setIsSubmitting] =
-    useState(false);
+  const unlockCredentialFields =
+    (): void => {
+      setCredentialFieldsUnlocked(
+        true,
+      );
+    };
+
+  const [
+    rememberMe,
+    setRememberMe,
+  ] = useState(false);
+
+  const [
+    isSubmitting,
+    setIsSubmitting,
+  ] = useState(false);
 
   const [
     generalError,
@@ -774,13 +800,15 @@ export function AdminLoginCard({
   const validateForm =
     (): boolean => {
       const nextErrors:
-        AdminLoginFieldErrors = {};
+        AdminLoginFieldErrors =
+        {};
 
       if (!normalizedEmail) {
         nextErrors.email =
           copy.emailRequired;
       } else if (
-        normalizedEmail.length > 254 ||
+        normalizedEmail.length >
+          254 ||
         !EMAIL_PATTERN.test(
           normalizedEmail,
         )
@@ -793,7 +821,8 @@ export function AdminLoginCard({
         nextErrors.password =
           copy.passwordRequired;
       } else if (
-        password.length > 256
+        password.length >
+          256
       ) {
         nextErrors.password =
           copy.passwordTooLong;
@@ -812,8 +841,9 @@ export function AdminLoginCard({
 
   const storePendingVerification =
     (
-      data: AdminLoginApiData,
-    ) => {
+      data:
+        AdminLoginApiData,
+    ): void => {
       try {
         sessionStorage.setItem(
           "fixora.pendingVerification",
@@ -849,7 +879,7 @@ export function AdminLoginCard({
     };
 
   const handleVerificationRequest =
-    () => {
+    (): void => {
       router.push(
         "/verificar-correo",
       );
@@ -857,56 +887,68 @@ export function AdminLoginCard({
 
   const handleSubmit =
     async (
-      event: FormEvent<HTMLFormElement>,
-    ) => {
+      event:
+        FormEvent<HTMLFormElement>,
+    ): Promise<void> => {
       event.preventDefault();
 
       if (isSubmitting) {
         return;
       }
 
-      setGeneralError(null);
-      setVerificationRequired(false);
+      setGeneralError(
+        null,
+      );
+
+      setVerificationRequired(
+        false,
+      );
 
       if (!validateForm()) {
         return;
       }
 
-      setIsSubmitting(true);
+      setIsSubmitting(
+        true,
+      );
 
       try {
-        const response = await fetch(
-          "/api/admin/auth/iniciar-sesion",
-          {
-            method: "POST",
+        const response =
+          await fetch(
+            "/api/admin/auth/iniciar-sesion",
+            {
+              method:
+                "POST",
 
-            credentials:
-              "include",
+              credentials:
+                "include",
 
-            headers: {
-              "Content-Type":
-                "application/json",
+              headers: {
+                "Content-Type":
+                  "application/json",
 
-              Accept:
-                "application/json",
+                Accept:
+                  "application/json",
+              },
+
+              body:
+                JSON.stringify({
+                  email:
+                    normalizedEmail,
+
+                  password,
+
+                  rememberMe,
+                }),
             },
-
-            body: JSON.stringify({
-              email:
-                normalizedEmail,
-
-              password,
-
-              rememberMe,
-            }),
-          },
-        );
+          );
 
         const payload =
           (await response
             .json()
             .catch(
-              () => null,
+              () =>
+                null,
             )) as
             | ApiResponse<AdminLoginApiData>
             | null;
@@ -914,7 +956,8 @@ export function AdminLoginCard({
         const apiCode =
           normalizeApiCode(
             payload?.code ??
-              payload?.data
+              payload
+                ?.data
                 ?.status,
           );
 
@@ -924,7 +967,8 @@ export function AdminLoginCard({
           payload.data.session
         ) {
           const authenticatedResult:
-            AdminLoginAuthenticatedResult = {
+            AdminLoginAuthenticatedResult =
+            {
               user:
                 payload.data.user,
 
@@ -981,7 +1025,8 @@ export function AdminLoginCard({
           )
         ) {
           storePendingVerification(
-            payload?.data ?? {},
+            payload?.data ??
+              {},
           );
 
           setVerificationRequired(
@@ -1008,13 +1053,15 @@ export function AdminLoginCard({
           )
         ) {
           const retryAfterSeconds =
-            payload?.data
+            payload
+              ?.data
               ?.retryAfterSeconds;
 
           const retryMessage =
             typeof retryAfterSeconds ===
               "number" &&
-            retryAfterSeconds > 0
+            retryAfterSeconds >
+              0
               ? ` ${formatRetryTime(
                   retryAfterSeconds,
                   copy,
@@ -1065,7 +1112,8 @@ export function AdminLoginCard({
         }
 
         if (
-          response.status === 401 ||
+          response.status ===
+            401 ||
           apiCode.includes(
             "INVALID_CREDENTIALS",
           ) ||
@@ -1088,7 +1136,8 @@ export function AdminLoginCard({
         }
 
         if (
-          response.status === 429 ||
+          response.status ===
+            429 ||
           apiCode.includes(
             "RATE_LIMIT",
           ) ||
@@ -1097,13 +1146,15 @@ export function AdminLoginCard({
           )
         ) {
           const retryAfterSeconds =
-            payload?.data
+            payload
+              ?.data
               ?.retryAfterSeconds;
 
           const retryMessage =
             typeof retryAfterSeconds ===
               "number" &&
-            retryAfterSeconds > 0
+            retryAfterSeconds >
+              0
               ? ` ${formatRetryTime(
                   retryAfterSeconds,
                   copy,
@@ -1122,7 +1173,8 @@ export function AdminLoginCard({
         }
 
         if (
-          response.status === 403
+          response.status ===
+            403
         ) {
           setGeneralError(
             getApiMessage(
@@ -1147,7 +1199,9 @@ export function AdminLoginCard({
           copy.networkError,
         );
       } finally {
-        setIsSubmitting(false);
+        setIsSubmitting(
+          false,
+        );
       }
     };
 
@@ -1193,7 +1247,9 @@ export function AdminLoginCard({
           </h1>
 
           <p className="mt-4 max-w-lg text-sm leading-7 text-white/70 sm:text-base">
-            {copy.panelDescription}
+            {
+              copy.panelDescription
+            }
           </p>
 
           <div className="mt-8 grid gap-5">
@@ -1250,12 +1306,16 @@ export function AdminLoginCard({
           onSubmit={
             handleSubmit
           }
+          autoComplete="off"
+          data-form-type="other"
           noValidate
           className="mx-auto grid w-full max-w-md gap-5"
         >
           <header>
             <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-600 dark:text-emerald-400">
-              {copy.formEyebrow}
+              {
+                copy.formEyebrow
+              }
             </p>
 
             <h2 className="mt-2 text-2xl font-bold tracking-tight text-zinc-950 dark:text-white sm:text-3xl">
@@ -1283,7 +1343,9 @@ export function AdminLoginCard({
                   }
                   className="mt-2 font-semibold underline underline-offset-4 transition hover:opacity-80"
                 >
-                  {copy.verifyEmail}
+                  {
+                    copy.verifyEmail
+                  }
                 </button>
               ) : null}
             </AuthFieldMessage>
@@ -1299,13 +1361,23 @@ export function AdminLoginCard({
             placeholder={
               copy.emailPlaceholder
             }
-            autoComplete="username"
+            autoComplete="off"
             inputMode="email"
             spellCheck={false}
             autoCapitalize="none"
             maxLength={254}
             required
-            autoFocus
+            readOnly={
+              !credentialFieldsUnlocked
+            }
+            data-lpignore="true"
+            data-1p-ignore="true"
+            onFocus={
+              unlockCredentialFields
+            }
+            onPointerDown={
+              unlockCredentialFields
+            }
             disabled={
               isSubmitting
             }
@@ -1315,9 +1387,13 @@ export function AdminLoginCard({
             leadingIcon={
               <EmailIcon />
             }
-            onChange={(event) => {
+            onChange={(
+              event,
+            ) => {
               setEmail(
-                event.target.value,
+                event
+                  .target
+                  .value,
               );
 
               setFieldErrors(
@@ -1325,6 +1401,7 @@ export function AdminLoginCard({
                   currentErrors,
                 ) => ({
                   ...currentErrors,
+
                   email:
                     undefined,
                 }),
@@ -1349,9 +1426,20 @@ export function AdminLoginCard({
             placeholder={
               copy.passwordPlaceholder
             }
-            autoComplete="current-password"
+            autoComplete="new-password"
             maxLength={256}
             required
+            readOnly={
+              !credentialFieldsUnlocked
+            }
+            data-lpignore="true"
+            data-1p-ignore="true"
+            onFocus={
+              unlockCredentialFields
+            }
+            onPointerDown={
+              unlockCredentialFields
+            }
             disabled={
               isSubmitting
             }
@@ -1367,9 +1455,13 @@ export function AdminLoginCard({
             leadingIcon={
               <LockIcon />
             }
-            onChange={(event) => {
+            onChange={(
+              event,
+            ) => {
               setPassword(
-                event.target.value,
+                event
+                  .target
+                  .value,
               );
 
               setFieldErrors(
@@ -1377,6 +1469,7 @@ export function AdminLoginCard({
                   currentErrors,
                 ) => ({
                   ...currentErrors,
+
                   password:
                     undefined,
                 }),
@@ -1403,9 +1496,13 @@ export function AdminLoginCard({
             label={
               copy.rememberMe
             }
-            onChange={(event) => {
+            onChange={(
+              event,
+            ) => {
               setRememberMe(
-                event.target.checked,
+                event
+                  .target
+                  .checked,
               );
             }}
           />
@@ -1426,7 +1523,9 @@ export function AdminLoginCard({
 
           <div className="flex flex-wrap items-center justify-center gap-1.5 text-center text-sm text-zinc-600 dark:text-zinc-300">
             <span>
-              {copy.regularAccess}
+              {
+                copy.regularAccess
+              }
             </span>
 
             <Link
@@ -1443,7 +1542,9 @@ export function AdminLoginCard({
             </span>
 
             <span>
-              {copy.securityFooter}
+              {
+                copy.securityFooter
+              }
             </span>
           </div>
         </form>

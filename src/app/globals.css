@@ -1,5 +1,17 @@
 @import "tailwindcss";
 
+/*
+ * Permite que las clases dark:* de Tailwind CSS 4
+ * respondan al atributo data-theme="dark" usado
+ * por ThemeContext.
+ */
+@custom-variant dark (
+  &:where(
+    [data-theme="dark"],
+    [data-theme="dark"] *
+  )
+);
+
 /* =========================================================
    FIXORA — ESTILOS GLOBALES
    Tailwind CSS 4
@@ -44,10 +56,20 @@ html[data-theme="light"] {
   --fixora-focus: #317b22;
 
   /* Fondo decorativo */
-  --fixora-background-glow: rgba(76, 175, 47, 0.07);
+  --fixora-background-glow: rgba(
+    76,
+    175,
+    47,
+    0.07
+  );
 
   /* Overlay */
-  --fixora-overlay: rgba(10, 15, 11, 0.12);
+  --fixora-overlay: rgba(
+    10,
+    15,
+    11,
+    0.12
+  );
 
   /* Sombras */
   --fixora-shadow-soft:
@@ -84,8 +106,19 @@ html[data-theme="dark"] {
   --fixora-surface-active: #2b402c;
 
   /* Bordes */
-  --fixora-border: rgba(232, 243, 234, 0.1);
-  --fixora-border-strong: rgba(232, 243, 234, 0.18);
+  --fixora-border: rgba(
+    232,
+    243,
+    234,
+    0.1
+  );
+
+  --fixora-border-strong: rgba(
+    232,
+    243,
+    234,
+    0.18
+  );
 
   /* Textos */
   --fixora-text: #f3f7f3;
@@ -96,7 +129,13 @@ html[data-theme="dark"] {
   --fixora-green: #62c945;
   --fixora-green-hover: #72d653;
   --fixora-green-strong: #429b2e;
-  --fixora-green-soft: rgba(98, 201, 69, 0.16);
+
+  --fixora-green-soft: rgba(
+    98,
+    201,
+    69,
+    0.16
+  );
 
   /* Estados */
   --fixora-active-background: #429b2e;
@@ -104,10 +143,20 @@ html[data-theme="dark"] {
   --fixora-focus: #72d653;
 
   /* Fondo decorativo */
-  --fixora-background-glow: rgba(98, 201, 69, 0.11);
+  --fixora-background-glow: rgba(
+    98,
+    201,
+    69,
+    0.11
+  );
 
   /* Overlay */
-  --fixora-overlay: rgba(0, 0, 0, 0.38);
+  --fixora-overlay: rgba(
+    0,
+    0,
+    0,
+    0.38
+  );
 
   /* Sombras */
   --fixora-shadow-soft:
@@ -133,44 +182,81 @@ html[data-theme="dark"] {
 
 @theme inline {
   /* Fondos y superficies */
-  --color-fixora-background: var(--fixora-background);
-  --color-fixora-surface: var(--fixora-surface);
-  --color-fixora-surface-solid: var(--fixora-surface-solid);
-  --color-fixora-surface-hover: var(--fixora-surface-hover);
-  --color-fixora-surface-active: var(--fixora-surface-active);
+  --color-fixora-background:
+    var(--fixora-background);
+
+  --color-fixora-surface:
+    var(--fixora-surface);
+
+  --color-fixora-surface-solid:
+    var(--fixora-surface-solid);
+
+  --color-fixora-surface-hover:
+    var(--fixora-surface-hover);
+
+  --color-fixora-surface-active:
+    var(--fixora-surface-active);
 
   /* Bordes */
-  --color-fixora-border: var(--fixora-border);
-  --color-fixora-border-strong: var(--fixora-border-strong);
+  --color-fixora-border:
+    var(--fixora-border);
+
+  --color-fixora-border-strong:
+    var(--fixora-border-strong);
 
   /* Textos */
-  --color-fixora-text: var(--fixora-text);
-  --color-fixora-text-secondary: var(--fixora-text-secondary);
-  --color-fixora-text-muted: var(--fixora-text-muted);
+  --color-fixora-text:
+    var(--fixora-text);
+
+  --color-fixora-text-secondary:
+    var(--fixora-text-secondary);
+
+  --color-fixora-text-muted:
+    var(--fixora-text-muted);
 
   /* Marca */
-  --color-fixora-green: var(--fixora-green);
-  --color-fixora-green-hover: var(--fixora-green-hover);
-  --color-fixora-green-strong: var(--fixora-green-strong);
-  --color-fixora-green-soft: var(--fixora-green-soft);
+  --color-fixora-green:
+    var(--fixora-green);
+
+  --color-fixora-green-hover:
+    var(--fixora-green-hover);
+
+  --color-fixora-green-strong:
+    var(--fixora-green-strong);
+
+  --color-fixora-green-soft:
+    var(--fixora-green-soft);
 
   /* Estados */
-  --color-fixora-active-background: var(--fixora-active-background);
-  --color-fixora-active-text: var(--fixora-active-text);
-  --color-fixora-focus: var(--fixora-focus);
+  --color-fixora-active-background:
+    var(--fixora-active-background);
+
+  --color-fixora-active-text:
+    var(--fixora-active-text);
+
+  --color-fixora-focus:
+    var(--fixora-focus);
 
   /* Sombras */
-  --shadow-fixora-soft: var(--fixora-shadow-soft);
-  --shadow-fixora-navbar: var(--fixora-shadow-navbar);
-  --shadow-fixora-hover: var(--fixora-shadow-hover);
-  --shadow-fixora-active: var(--fixora-shadow-active);
+  --shadow-fixora-soft:
+    var(--fixora-shadow-soft);
+
+  --shadow-fixora-navbar:
+    var(--fixora-shadow-navbar);
+
+  --shadow-fixora-hover:
+    var(--fixora-shadow-hover);
+
+  --shadow-fixora-active:
+    var(--fixora-shadow-active);
 
   /* Bordes redondeados */
   --radius-fixora-capsule: 9999px;
   --radius-fixora-panel: 28px;
 
   /* Curva de animación */
-  --ease-fixora-expand: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-fixora-expand:
+    cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* =========================================================
@@ -186,8 +272,12 @@ html[data-theme="dark"] {
 html {
   min-width: 320px;
   min-height: 100%;
+
   scroll-behavior: smooth;
-  background-color: var(--fixora-background);
+
+  background-color:
+    var(--fixora-background);
+
   transition:
     background-color 350ms ease,
     color 350ms ease;
@@ -196,7 +286,9 @@ html {
 body {
   min-width: 320px;
   min-height: 100vh;
+
   margin: 0;
+
   overflow-x: hidden;
 
   background:
@@ -207,16 +299,22 @@ body {
     ),
     var(--fixora-background);
 
-  color: var(--fixora-text);
+  color:
+    var(--fixora-text);
 
   font-family:
     Arial,
     Helvetica,
     sans-serif;
 
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  text-rendering:
+    optimizeLegibility;
+
+  -webkit-font-smoothing:
+    antialiased;
+
+  -moz-osx-font-smoothing:
+    grayscale;
 
   transition:
     background-color 350ms ease,
@@ -236,7 +334,8 @@ button {
 
 button,
 a {
-  -webkit-tap-highlight-color: transparent;
+  -webkit-tap-highlight-color:
+    transparent;
 }
 
 a {
@@ -256,6 +355,7 @@ ul,
 ol {
   margin: 0;
   padding: 0;
+
   list-style: none;
 }
 
@@ -291,6 +391,7 @@ select {
 
 * {
   scrollbar-width: thin;
+
   scrollbar-color:
     var(--fixora-green)
     transparent;
@@ -306,12 +407,15 @@ select {
 }
 
 *::-webkit-scrollbar-thumb {
-  background-color: var(--fixora-green);
+  background-color:
+    var(--fixora-green);
+
   border-radius: 9999px;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background-color: var(--fixora-green-hover);
+  background-color:
+    var(--fixora-green-hover);
 }
 
 /* =========================================================
@@ -319,20 +423,28 @@ select {
    ========================================================= */
 
 :focus-visible {
-  outline: 3px solid var(--fixora-focus);
+  outline:
+    3px solid
+    var(--fixora-focus);
+
   outline-offset: 4px;
 }
 
 ::selection {
-  background-color: var(--fixora-green-soft);
-  color: var(--fixora-text);
+  background-color:
+    var(--fixora-green-soft);
+
+  color:
+    var(--fixora-text);
 }
 
 /* =========================================================
    REDUCCIÓN DE MOVIMIENTO
    ========================================================= */
 
-@media (prefers-reduced-motion: reduce) {
+@media (
+  prefers-reduced-motion: reduce
+) {
   html {
     scroll-behavior: auto;
   }
@@ -340,9 +452,16 @@ select {
   *,
   *::before,
   *::after {
-    scroll-behavior: auto !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    scroll-behavior:
+      auto !important;
+
+    animation-duration:
+      0.01ms !important;
+
+    animation-iteration-count:
+      1 !important;
+
+    transition-duration:
+      0.01ms !important;
   }
 }

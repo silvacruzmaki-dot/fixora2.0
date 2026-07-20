@@ -470,6 +470,23 @@ export function LoginForm({
     setPassword,
   ] = useState("");
 
+  /*
+   * Mantiene los campos bloqueados hasta la primera
+   * interacción real del usuario. Esto reduce el
+   * autocompletado automático al recargar la página.
+   */
+  const [
+    credentialFieldsUnlocked,
+    setCredentialFieldsUnlocked,
+  ] = useState(false);
+
+  const unlockCredentialFields =
+    (): void => {
+      setCredentialFieldsUnlocked(
+        true,
+      );
+    };
+
   const [
     rememberMe,
     setRememberMe,
@@ -980,6 +997,8 @@ export function LoginForm({
       onSubmit={
         handleSubmit
       }
+      autoComplete="off"
+      data-form-type="other"
       noValidate
       className={[
         "grid w-full gap-5",
@@ -1038,12 +1057,23 @@ export function LoginForm({
         placeholder={
           copy.emailPlaceholder
         }
-        autoComplete="email"
+        autoComplete="off"
         inputMode="email"
         spellCheck={false}
         autoCapitalize="none"
         maxLength={254}
         required
+        readOnly={
+          !credentialFieldsUnlocked
+        }
+        data-lpignore="true"
+        data-1p-ignore="true"
+        onFocus={
+          unlockCredentialFields
+        }
+        onPointerDown={
+          unlockCredentialFields
+        }
         disabled={
           isSubmitting
         }
@@ -1117,9 +1147,20 @@ export function LoginForm({
           placeholder={
             copy.passwordPlaceholder
           }
-          autoComplete="current-password"
+          autoComplete="new-password"
           maxLength={256}
           required
+          readOnly={
+            !credentialFieldsUnlocked
+          }
+          data-lpignore="true"
+          data-1p-ignore="true"
+          onFocus={
+            unlockCredentialFields
+          }
+          onPointerDown={
+            unlockCredentialFields
+          }
           disabled={
             isSubmitting
           }

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+
 import type {
   HTMLAttributes,
   ReactNode,
@@ -140,15 +141,18 @@ function LockIcon() {
 export function AuthPageShell({
   children,
 
-  showHeader = true,
+  showHeader = false,
   showFooter = true,
 
   contentClassName = "",
 
   className,
+
   ...containerProps
 }: AuthPageShellProps) {
-  const { language } = useLanguage();
+  const {
+    language,
+  } = useLanguage();
 
   const currentLanguage:
     | "es"
