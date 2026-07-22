@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 
+import { AuthProvider } from "@/context/auth/AuthContext";
 import { LanguageProvider } from "@/context/language/LanguageContext";
 import { ThemeProvider } from "@/context/theme/ThemeContext";
 
@@ -13,10 +14,12 @@ export default function Providers({
   children,
 }: Readonly<ProvidersProps>) {
   return (
-    <ThemeProvider>
-      <LanguageProvider>
-        {children}
-      </LanguageProvider>
-    </ThemeProvider>
+    <AuthProvider>
+      <ThemeProvider>
+        <LanguageProvider>
+          {children}
+        </LanguageProvider>
+      </ThemeProvider>
+    </AuthProvider>
   );
 }

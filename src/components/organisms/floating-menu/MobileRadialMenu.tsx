@@ -1,12 +1,25 @@
 "use client";
 
-import { useCallback } from "react";
-import { useRouter } from "next/navigation";
+import {
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
+
+import {
+  usePathname,
+  useRouter,
+} from "next/navigation";
 
 import FloatingMenuButton from "@/components/atoms/floating-menu/FloatingMenuButton";
 import FloatingMenuOverlay from "@/components/atoms/floating-menu/FloatingMenuOverlay";
 import RadialMenuWheel from "@/components/molecules/floating-menu/RadialMenuWheel";
 
+import {
+  AUTH_DEFAULT_REDIRECTS,
+} from "@/constants/auth/auth.routes";
+
+import { useAuth } from "@/hooks/auth/useAuth";
 import useFloatingMenu from "@/hooks/floating-menu/useFloatingMenu";
 import useRadialRotation from "@/hooks/floating-menu/useRadialRotation";
 import useLanguage from "@/hooks/language/useLanguage";
@@ -17,8 +30,22 @@ const MOBILE_MENU_RADIUS = 92;
 
 export default function MobileRadialMenu() {
   const router = useRouter();
+  const pathname = usePathname();
 
-  const { t } = useLanguage();
+  const [
+    isSigningOut,
+    setIsSigningOut,
+  ] = useState(false);
+
+  const {
+    isAuthenticated,
+    isAdministrator,
+    refreshSession,
+    signOut,
+  } = useAuth();
+
+  const { t } =
+    useLanguage();
 
   const {
     isOpen,
@@ -32,24 +59,118 @@ export default function MobileRadialMenu() {
     handleTouchMove,
   } = useRadialRotation();
 
-  const handleItemAction = useCallback(
-    (item: FloatingMenuItem): void => {
-      if (item.href) {
-        router.push(item.href);
-        closeMenu();
-        return;
-      }
+  /*
+   * Actualiza la sesión al abrir el menú.
+   * Funciona tanto para usuarios como administradores.
+   */
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
 
-      if (item.action === "logout") {
-        /*
-         * Se conectará posteriormente
-         * con el sistema de autenticación.
-         */
+    void refreshSession({
+      silent: true,
+    });
+  }, [
+    isOpen,
+    pathname,
+    refreshSession,
+  ]);
+
+  const handleSignOut =
+    useCallback(
+      async (): Promise<void> => {
+        if (
+          isSigningOut ||
+          !isAuthenticated
+        ) {
+          closeMenu();
+          return;
+        }
+
+        const wasAdministrator =
+          isAdministrator;
+
+        setIsSigningOut(true);
         closeMenu();
-      }
-    },
-    [closeMenu, router],
-  );
+
+        try {
+          const signedOut =
+            await signOut();
+
+          if (!signedOut) {
+            await refreshSession({
+              silent: true,
+            });
+
+            return;
+          }
+
+          const redirectPath =
+            wasAdministrator
+              ? AUTH_DEFAULT_REDIRECTS
+                  .AFTER_ADMIN_LOGOUT
+              : AUTH_DEFAULT_REDIRECTS
+                  .AFTER_USER_LOGOUT;
+
+          router.replace(
+            redirectPath,
+          );
+
+          router.refresh();
+        } finally {
+          setIsSigningOut(
+            false,
+          );
+        }
+      },
+      [
+        closeMenu,
+        isAdministrator,
+        isAuthenticated,
+        isSigningOut,
+        refreshSession,
+        router,
+        signOut,
+      ],
+    );
+
+  const handleItemAction =
+    useCallback(
+      (
+        item: FloatingMenuItem,
+      ): void => {
+        if (
+          item.requiresAuth &&
+          !isAuthenticated
+        ) {
+          closeMenu();
+          return;
+        }
+
+        if (
+          item.action ===
+          "logout"
+        ) {
+          void handleSignOut();
+          return;
+        }
+
+        if (item.href) {
+          router.push(
+            item.href,
+          );
+
+          closeMenu();
+        }
+      },
+      [
+        closeMenu,
+        handleSignOut,
+        isAuthenticated,
+        router,
+      ],
+    );
 
   return (
     <>
@@ -59,7 +180,10 @@ export default function MobileRadialMenu() {
       />
 
       <section
-        aria-label={t.floatingMenu.quickSettings}
+        aria-label={
+          t.floatingMenu
+            .quickSettings
+        }
         onTouchStart={
           isOpen
             ? handleTouchStart
@@ -86,13 +210,19 @@ export default function MobileRadialMenu() {
           <RadialMenuWheel
             isOpen={isOpen}
             rotation={rotation}
-            radius={MOBILE_MENU_RADIUS}
-            onAction={handleItemAction}
+            radius={
+              MOBILE_MENU_RADIUS
+            }
+            onAction={
+              handleItemAction
+            }
           />
 
           <FloatingMenuButton
             isOpen={isOpen}
-            onToggle={toggleMenu}
+            onToggle={
+              toggleMenu
+            }
           />
         </div>
       </section>

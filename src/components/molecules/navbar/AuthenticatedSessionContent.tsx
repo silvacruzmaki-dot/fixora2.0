@@ -60,7 +60,7 @@ const AUTHENTICATED_SESSION_COPY = {
       "Mi perfil",
 
     profileDescription:
-      "Consulta y actualiza tu informaciÃ³n personal.",
+      "Consulta y actualiza tu información personal.",
 
     notifications:
       "Notificaciones",
@@ -81,19 +81,19 @@ const AUTHENTICATED_SESSION_COPY = {
       "Gestiona usuarios y funciones internas.",
 
     signOut:
-      "Cerrar sesiÃ³n",
+      "Cerrar sesión",
 
     signingOut:
-      "Cerrando sesiÃ³n...",
+      "Cerrando sesión...",
 
     signOutError:
-      "No fue posible cerrar la sesiÃ³n correctamente.",
+      "No fue posible cerrar la sesión correctamente.",
 
     unread:
       "notificaciones sin leer",
 
     secureSession:
-      "Tu sesiÃ³n estÃ¡ protegida.",
+      "Tu sesión está protegida.",
 
     unknownUser:
       "Usuario FIXORA",
@@ -396,7 +396,8 @@ export function AuthenticatedSessionContent({
 }: AuthenticatedSessionContentProps) {
   const router = useRouter();
 
-  const { language } = useLanguage();
+  const { language } =
+    useLanguage();
 
   const currentLanguage:
     | "es"
@@ -418,7 +419,9 @@ export function AuthenticatedSessionContent({
   const [
     signOutError,
     setSignOutError,
-  ] = useState<string | null>(null);
+  ] = useState<string | null>(
+    null,
+  );
 
   const isSigningOut =
     controlledIsSigningOut ??
@@ -441,7 +444,8 @@ export function AuthenticatedSessionContent({
   const normalizedRole =
     user.role
       ?.trim()
-      .toUpperCase() ?? "USER";
+      .toUpperCase() ??
+    "USER";
 
   const isAdministrator =
     normalizedRole === "ADMIN";
@@ -460,7 +464,7 @@ export function AuthenticatedSessionContent({
     );
 
   const handleSignOut =
-    async () => {
+    async (): Promise<void> => {
       if (isSigningOut) {
         return;
       }
@@ -512,7 +516,9 @@ export function AuthenticatedSessionContent({
         );
 
         router.refresh();
-      } catch (error: unknown) {
+      } catch (
+        error: unknown
+      ) {
         setSignOutError(
           error instanceof Error
             ? error.message
