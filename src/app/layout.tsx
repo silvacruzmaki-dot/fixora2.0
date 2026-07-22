@@ -13,10 +13,7 @@ const geist = Geist({
   display: "swap",
 });
 
-/*
- * Aplica el tema antes de que React se hidrate.
- * Evita el destello de un tema incorrecto al recargar.
- */
+
 const THEME_INITIALIZATION_SCRIPT = `
   (() => {
     const storageKey = "fixora-theme";
