@@ -1,0 +1,9 @@
+export { default as SoftwareCatalogSection } from "./SoftwareCatalogSection";
+export { default as SoftwareCategoriesSection } from "./SoftwareCategoriesSection";
+export { default as SoftwareCustomSolutionBanner } from "./SoftwareCustomSolutionBanner";
+export { default as SoftwareFeaturedSection } from "./SoftwareFeaturedSection";
+export { default as SoftwareFiltersSidebar } from "./SoftwareFiltersSidebar";
+export { default as SoftwareHero } from "./SoftwareHero";
+export { default as SoftwareProductDetailsModal } from "./SoftwareProductDetailsModal";
+export { default as SoftwareStore } from "./SoftwareStore";
+export { default as SoftwareTrustBar } from "./SoftwareTrustBar";

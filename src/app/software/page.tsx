@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 
+import { SoftwareStore } from "@/components/organisms/software";
+
 export const metadata: Metadata = {
-  title: "Software",
+  title: "Software | FIXORA",
   description:
-    "Catálogo de programas, licencias, sistemas operativos y soluciones de software ofrecidas por FIXORA.",
+    "Encuentra las mejores soluciones de software, licencias originales y herramientas digitales para empresas, profesionales y estudiantes.",
 };
 
 export default function SoftwarePage() {
-  return null;
+  return <SoftwareStore />;
 }
