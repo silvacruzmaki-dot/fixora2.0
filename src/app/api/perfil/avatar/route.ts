@@ -1,3 +1,11 @@
+import { randomUUID } from "node:crypto";
+import {
+  mkdir,
+  unlink,
+  writeFile,
+} from "node:fs/promises";
+import path from "node:path";
+
 import {
   type NextRequest,
   NextResponse,
@@ -17,25 +25,42 @@ import {
 } from "@/lib/auth/rate-limit";
 
 import {
+  getProfileBySessionToken,
   removeAvatarBySessionToken,
   updateAvatarBySessionToken,
 } from "@/server/services/profile.service";
 
-export const runtime =
-  "nodejs";
+export const runtime = "nodejs";
 
 export const dynamic =
   "force-dynamic";
 
-export const revalidate =
-  0;
+export const revalidate = 0;
 
 const MAX_AVATAR_SIZE_BYTES =
-  5 * 1024 * 1024;
+  10 * 1024 * 1024;
 
 const MAX_REQUEST_SIZE_BYTES =
   MAX_AVATAR_SIZE_BYTES +
-  128 * 1024;
+  1024 * 1024;
+
+const AVATAR_URL_PREFIX =
+  "/uploads/avatars/";
+
+const AVATAR_DIRECTORY =
+  path.join(
+    process.cwd(),
+    "public",
+    "uploads",
+    "avatars",
+  );
+
+const ALLOWED_MIME_TYPES =
+  new Set([
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+  ]);
 
 const RESPONSE_HEADERS = {
   "Cache-Control":
@@ -60,29 +85,22 @@ const RESPONSE_HEADERS = {
     "Cookie",
 } as const;
 
-const ALLOWED_MIME_TYPES =
-  new Set([
-    "image/jpeg",
-    "image/png",
-    "image/webp",
-  ]);
-
-type SupportedAvatarMimeType =
+type AvatarMimeType =
   | "image/jpeg"
   | "image/png"
   | "image/webp";
 
-type SupportedAvatarExtension =
+type AvatarExtension =
   | "jpg"
   | "png"
   | "webp";
 
 interface DetectedAvatarType {
   mimeType:
-    SupportedAvatarMimeType;
+    AvatarMimeType;
 
   extension:
-    SupportedAvatarExtension;
+    AvatarExtension;
 }
 
 interface LocalizedMessage {
@@ -90,254 +108,17 @@ interface LocalizedMessage {
   en: string;
 }
 
-interface ApiResponseBody {
-  ok: boolean;
-  code: string;
-
+function createResponse(
+  ok: boolean,
+  code: string,
   message:
-    LocalizedMessage;
-
+    LocalizedMessage,
+  status: number,
   data?:
     Record<
       string,
       unknown
-    >;
-
-  fieldErrors?:
-    Record<
-      string,
-      string[]
-    >;
-}
-
-interface AvatarResponseData {
-  avatarUrl:
-    string | null;
-
-  updatedAt:
-    string | null;
-}
-
-type UnknownRecord =
-  Record<
-    string,
-    unknown
-  >;
-
-function isRecord(
-  value: unknown,
-): value is UnknownRecord {
-  return (
-    typeof value ===
-      "object" &&
-    value !==
-      null &&
-    !Array.isArray(
-      value,
-    )
-  );
-}
-
-function serializeDateValue(
-  value: unknown,
-): string | null {
-  if (
-    value instanceof
-    Date
-  ) {
-    if (
-      Number.isNaN(
-        value.getTime(),
-      )
-    ) {
-      return null;
-    }
-
-    return value.toISOString();
-  }
-
-  if (
-    typeof value !==
-      "string" &&
-    typeof value !==
-      "number"
-  ) {
-    return null;
-  }
-
-  const parsedDate =
-    new Date(
-      value,
-    );
-
-  if (
-    Number.isNaN(
-      parsedDate.getTime(),
-    )
-  ) {
-    return null;
-  }
-
-  return parsedDate.toISOString();
-}
-
-/*
- * El servicio de perfil puede devolver el usuario
- * actualizado dentro de diferentes propiedades,
- * por ejemplo:
- *
- * - result.user
- * - result.profile
- * - result.updatedUser
- * - result.updatedProfile
- * - result.data.user
- *
- * Esta función obtiene avatarUrl y updatedAt sin
- * forzar un tipo incorrecto sobre el resultado real
- * del servicio.
- */
-function getAvatarResponseData(
-  serviceResult: unknown,
-): AvatarResponseData {
-  const records:
-    UnknownRecord[] = [];
-
-  const appendRecord = (
-    value: unknown,
-  ): void => {
-    if (
-      !isRecord(
-        value,
-      ) ||
-      records.includes(
-        value,
-      )
-    ) {
-      return;
-    }
-
-    records.push(
-      value,
-    );
-  };
-
-  appendRecord(
-    serviceResult,
-  );
-
-  /*
-   * Recorremos solamente propiedades conocidas
-   * relacionadas con resultados de servicios.
-   */
-  for (
-    let index = 0;
-    index < records.length &&
-    index < 20;
-    index += 1
-  ) {
-    const record =
-      records[index];
-
-    appendRecord(
-      record.user,
-    );
-
-    appendRecord(
-      record.profile,
-    );
-
-    appendRecord(
-      record.updatedUser,
-    );
-
-    appendRecord(
-      record.updatedProfile,
-    );
-
-    appendRecord(
-      record.data,
-    );
-
-    appendRecord(
-      record.result,
-    );
-  }
-
-  let avatarUrl:
-    string | null = null;
-
-  let avatarUrlWasFound =
-    false;
-
-  let updatedAt:
-    string | null = null;
-
-  for (
-    const record of
-    records
-  ) {
-    if (
-      !avatarUrlWasFound &&
-      Object.prototype.hasOwnProperty.call(
-        record,
-        "avatarUrl",
-      )
-    ) {
-      const candidateAvatarUrl =
-        record.avatarUrl;
-
-      if (
-        typeof candidateAvatarUrl ===
-          "string"
-      ) {
-        avatarUrl =
-          candidateAvatarUrl.trim() ||
-          null;
-
-        avatarUrlWasFound =
-          true;
-      } else if (
-        candidateAvatarUrl ===
-        null
-      ) {
-        avatarUrl =
-          null;
-
-        avatarUrlWasFound =
-          true;
-      }
-    }
-
-    if (
-      updatedAt ===
-      null
-    ) {
-      updatedAt =
-        serializeDateValue(
-          record.updatedAt,
-        );
-    }
-
-    if (
-      avatarUrlWasFound &&
-      updatedAt !==
-        null
-    ) {
-      break;
-    }
-  }
-
-  return {
-    avatarUrl,
-    updatedAt,
-  };
-}
-
-function createJsonResponse(
-  body:
-    ApiResponseBody,
-  status:
-    number,
+    >,
   additionalHeaders?:
     HeadersInit,
 ): NextResponse {
@@ -368,7 +149,17 @@ function createJsonResponse(
   }
 
   return NextResponse.json(
-    body,
+    {
+      ok,
+      code,
+      message,
+
+      ...(data
+        ? {
+            data,
+          }
+        : {}),
+    },
     {
       status,
       headers,
@@ -376,74 +167,82 @@ function createJsonResponse(
   );
 }
 
-function createUnauthenticatedResponse():
-  NextResponse {
-  return createJsonResponse(
-    {
-      ok:
-        false,
+function createUnauthenticatedResponse(
+  clearCookie = false,
+): NextResponse {
+  const response =
+    createResponse(
+      false,
 
-      code:
-        "AUTHENTICATION_REQUIRED",
+      "AUTHENTICATION_REQUIRED",
 
-      message: {
+      {
         es:
-          "Debes iniciar sesión para modificar tu avatar.",
+          "Debes iniciar sesión para modificar tu foto de perfil.",
 
         en:
-          "You must sign in to modify your avatar.",
+          "You must sign in to modify your profile picture.",
       },
 
-      data: {
+      401,
+
+      {
         authenticated:
           false,
 
         redirectTo:
           "/iniciar-sesion",
       },
-    },
-    401,
-  );
+    );
+
+  if (
+    clearCookie
+  ) {
+    clearSessionCookie(
+      response,
+    );
+  }
+
+  return response;
 }
 
-function getDeclaredContentLength(
+function getContentLength(
   request:
     NextRequest,
 ): number | null {
-  const contentLengthHeader =
+  const rawValue =
     request.headers.get(
       "content-length",
     );
 
   if (
-    !contentLengthHeader
+    !rawValue
   ) {
     return null;
   }
 
-  const contentLength =
+  const value =
     Number(
-      contentLengthHeader,
+      rawValue,
     );
 
   if (
     !Number.isFinite(
-      contentLength,
+      value,
     ) ||
-    contentLength <
-      0
+    value < 0
   ) {
     return null;
   }
 
-  return contentLength;
+  return value;
 }
 
-function getSanitizedUserAgent(
+function getUserAgent(
   request:
     NextRequest,
 ): string | null {
-  const userAgent =
+  const value =
     request.headers
       .get(
         "user-agent",
@@ -451,62 +250,42 @@ function getSanitizedUserAgent(
       ?.trim();
 
   if (
-    !userAgent
+    !value
   ) {
     return null;
   }
 
-  return userAgent.slice(
+  return value.slice(
     0,
     512,
   );
 }
 
-function normalizeRetryAfterSeconds(
-  value:
-    number,
-): number {
-  if (
-    !Number.isFinite(
-      value,
-    ) ||
-    value <
-      1
-  ) {
-    return 1;
-  }
-
-  return Math.ceil(
-    value,
-  );
-}
-
-function hasMatchingBytes(
+function hasBytes(
   bytes:
     Uint8Array,
-  expectedBytes:
+  signature:
     readonly number[],
-  offset =
-    0,
+  offset = 0,
 ): boolean {
   if (
     bytes.length <
     offset +
-      expectedBytes.length
+      signature.length
   ) {
     return false;
   }
 
-  return expectedBytes.every(
+  return signature.every(
     (
-      expectedByte,
+      byte,
       index,
     ) =>
       bytes[
         offset +
           index
       ] ===
-      expectedByte,
+      byte,
   );
 }
 
@@ -519,7 +298,7 @@ function detectAvatarType(
    * FF D8 FF
    */
   if (
-    hasMatchingBytes(
+    hasBytes(
       bytes,
       [
         0xff,
@@ -542,7 +321,7 @@ function detectAvatarType(
    * 89 50 4E 47 0D 0A 1A 0A
    */
   if (
-    hasMatchingBytes(
+    hasBytes(
       bytes,
       [
         0x89,
@@ -567,11 +346,10 @@ function detectAvatarType(
 
   /*
    * WebP:
-   *
    * RIFF....WEBP
    */
   const isWebP =
-    hasMatchingBytes(
+    hasBytes(
       bytes,
       [
         0x52,
@@ -579,9 +357,8 @@ function detectAvatarType(
         0x46,
         0x46,
       ],
-      0,
     ) &&
-    hasMatchingBytes(
+    hasBytes(
       bytes,
       [
         0x57,
@@ -607,7 +384,26 @@ function detectAvatarType(
   return null;
 }
 
-function isFileValue(
+function normalizeMimeType(
+  value:
+    string,
+): string {
+  const mimeType =
+    value
+      .trim()
+      .toLowerCase();
+
+  if (
+    mimeType ===
+    "image/jpg"
+  ) {
+    return "image/jpeg";
+  }
+
+  return mimeType;
+}
+
+function isFile(
   value:
     FormDataEntryValue | null,
 ): value is File {
@@ -619,12 +415,189 @@ function isFileValue(
   );
 }
 
+function createAvatarFileName(
+  userId:
+    string,
+  extension:
+    AvatarExtension,
+): string {
+  const safeUserId =
+    userId.replace(
+      /[^a-zA-Z0-9_-]/g,
+      "",
+    ) ||
+    "user";
+
+  return [
+    safeUserId,
+    "-",
+    randomUUID(),
+    ".",
+    extension,
+  ].join("");
+}
+
+function resolveLocalAvatarPath(
+  avatarUrl:
+    string | null,
+): string | null {
+  if (
+    !avatarUrl?.startsWith(
+      AVATAR_URL_PREFIX,
+    )
+  ) {
+    return null;
+  }
+
+  const fileName =
+    avatarUrl
+      .slice(
+        AVATAR_URL_PREFIX.length,
+      )
+      .split(
+        /[?#]/,
+        1,
+      )[0]
+      ?.trim();
+
+  if (
+    !fileName ||
+    fileName.includes(
+      "/",
+    ) ||
+    fileName.includes(
+      "\\",
+    ) ||
+    !/^[a-zA-Z0-9._-]+$/.test(
+      fileName,
+    )
+  ) {
+    return null;
+  }
+
+  return path.join(
+    AVATAR_DIRECTORY,
+    fileName,
+  );
+}
+
+async function deleteLocalAvatar(
+  avatarUrl:
+    string | null,
+): Promise<void> {
+  const filePath =
+    resolveLocalAvatarPath(
+      avatarUrl,
+    );
+
+  if (
+    !filePath
+  ) {
+    return;
+  }
+
+  try {
+    await unlink(
+      filePath,
+    );
+  } catch (
+    error: unknown
+  ) {
+    const errorCode =
+      typeof error ===
+        "object" &&
+      error !==
+        null &&
+      "code" in error
+        ? String(
+            error.code,
+          )
+        : "";
+
+    /*
+     * Si el archivo ya no existe,
+     * no se considera un error.
+     */
+    if (
+      errorCode !==
+      "ENOENT"
+    ) {
+      console.warn(
+        "FIXORA could not delete an avatar file:",
+        error,
+      );
+    }
+  }
+}
+
+async function getCurrentProfile(
+  sessionToken:
+    string,
+) {
+  const result =
+    await getProfileBySessionToken(
+      sessionToken,
+    );
+
+  if (
+    result.status !==
+    "authenticated"
+  ) {
+    return null;
+  }
+
+  return result.profile;
+}
+
+function createRateLimitResponse(
+  retryAfterSeconds:
+    number,
+): NextResponse {
+  const safeSeconds =
+    Number.isFinite(
+      retryAfterSeconds,
+    ) &&
+    retryAfterSeconds >=
+      1
+      ? Math.ceil(
+          retryAfterSeconds,
+        )
+      : 1;
+
+  return createResponse(
+    false,
+
+    "RATE_LIMITED",
+
+    {
+      es:
+        "Se realizaron demasiados cambios de imagen. Inténtalo más tarde.",
+
+      en:
+        "Too many profile picture changes were made. Try again later.",
+    },
+
+    429,
+
+    {
+      retryAfterSeconds:
+        safeSeconds,
+    },
+
+    {
+      "Retry-After":
+        String(
+          safeSeconds,
+        ),
+    },
+  );
+}
+
 /*
  * POST /api/perfil/avatar
  *
- * El formulario multipart/form-data debe contener:
- *
- * avatar: File
+ * Guarda una nueva foto para el usuario o
+ * administrador que tiene la sesión activa.
  */
 export async function POST(
   request:
@@ -635,22 +608,19 @@ export async function POST(
       request,
     )
   ) {
-    return createJsonResponse(
+    return createResponse(
+      false,
+
+      "UNTRUSTED_ORIGIN",
+
       {
-        ok:
-          false,
+        es:
+          "La solicitud no proviene de un origen autorizado.",
 
-        code:
-          "UNTRUSTED_ORIGIN",
-
-        message: {
-          es:
-            "La solicitud no proviene de un origen autorizado.",
-
-          en:
-            "The request does not come from an authorized origin.",
-        },
+        en:
+          "The request does not come from an authorized origin.",
       },
+
       403,
     );
   }
@@ -679,58 +649,52 @@ export async function POST(
       "multipart/form-data",
     )
   ) {
-    return createJsonResponse(
+    return createResponse(
+      false,
+
+      "UNSUPPORTED_MEDIA_TYPE",
+
       {
-        ok:
-          false,
+        es:
+          "La imagen debe enviarse mediante multipart/form-data.",
 
-        code:
-          "UNSUPPORTED_MEDIA_TYPE",
-
-        message: {
-          es:
-            "El avatar debe enviarse mediante un formulario multipart/form-data.",
-
-          en:
-            "The avatar must be sent using a multipart/form-data form.",
-        },
+        en:
+          "The image must be sent using multipart/form-data.",
       },
+
       415,
     );
   }
 
-  const declaredContentLength =
-    getDeclaredContentLength(
+  const contentLength =
+    getContentLength(
       request,
     );
 
   if (
-    declaredContentLength !==
+    contentLength !==
       null &&
-    declaredContentLength >
+    contentLength >
       MAX_REQUEST_SIZE_BYTES
   ) {
-    return createJsonResponse(
+    return createResponse(
+      false,
+
+      "REQUEST_TOO_LARGE",
+
       {
-        ok:
-          false,
+        es:
+          "La imagen supera el tamaño máximo permitido de 10 MB.",
 
-        code:
-          "REQUEST_TOO_LARGE",
-
-        message: {
-          es:
-            "La imagen supera el tamaño máximo permitido de 5 MB.",
-
-          en:
-            "The image exceeds the maximum allowed size of 5 MB.",
-        },
+        en:
+          "The image exceeds the maximum allowed size of 10 MB.",
       },
+
       413,
     );
   }
 
-  const rateLimitResult =
+  const rateLimit =
     await checkRateLimit({
       request,
 
@@ -747,41 +711,11 @@ export async function POST(
     });
 
   if (
-    !rateLimitResult.allowed
+    !rateLimit.allowed
   ) {
-    const retryAfterSeconds =
-      normalizeRetryAfterSeconds(
-        rateLimitResult
-          .retryAfterSeconds,
-      );
-
-    return createJsonResponse(
-      {
-        ok:
-          false,
-
-        code:
-          "RATE_LIMITED",
-
-        message: {
-          es:
-            "Se realizaron demasiados cambios de avatar. Inténtalo nuevamente más tarde.",
-
-          en:
-            "Too many avatar changes were made. Please try again later.",
-        },
-
-        data: {
-          retryAfterSeconds,
-        },
-      },
-      429,
-      {
-        "Retry-After":
-          String(
-            retryAfterSeconds,
-          ),
-      },
+    return createRateLimitResponse(
+      rateLimit
+        .retryAfterSeconds,
     );
   }
 
@@ -792,326 +726,322 @@ export async function POST(
     formData =
       await request.formData();
   } catch {
-    return createJsonResponse(
+    return createResponse(
+      false,
+
+      "INVALID_FORM_DATA",
+
       {
-        ok:
-          false,
+        es:
+          "No fue posible leer el archivo enviado.",
 
-        code:
-          "INVALID_FORM_DATA",
-
-        message: {
-          es:
-            "No fue posible leer el archivo enviado.",
-
-          en:
-            "The submitted file could not be read.",
-        },
+        en:
+          "The submitted file could not be read.",
       },
+
       400,
     );
   }
 
-  const avatarField =
+  const avatarFile =
     formData.get(
       "avatar",
     );
 
   if (
-    !isFileValue(
-      avatarField,
-    )
+    !isFile(
+      avatarFile,
+    ) ||
+    avatarFile.size <
+      1
   ) {
-    return createJsonResponse(
+    return createResponse(
+      false,
+
+      "AVATAR_REQUIRED",
+
       {
-        ok:
-          false,
+        es:
+          "Debes seleccionar una imagen válida.",
 
-        code:
-          "AVATAR_REQUIRED",
-
-        message: {
-          es:
-            "Debes seleccionar una imagen para tu avatar.",
-
-          en:
-            "You must select an image for your avatar.",
-        },
-
-        fieldErrors: {
-          avatar: [
-            "Debes seleccionar una imagen.",
-          ],
-        },
+        en:
+          "You must select a valid image.",
       },
+
       422,
     );
   }
 
   if (
-    avatarField.size <
-    1
-  ) {
-    return createJsonResponse(
-      {
-        ok:
-          false,
-
-        code:
-          "EMPTY_AVATAR_FILE",
-
-        message: {
-          es:
-            "La imagen seleccionada está vacía.",
-
-          en:
-            "The selected image is empty.",
-        },
-
-        fieldErrors: {
-          avatar: [
-            "El archivo está vacío.",
-          ],
-        },
-      },
-      422,
-    );
-  }
-
-  if (
-    avatarField.size >
+    avatarFile.size >
     MAX_AVATAR_SIZE_BYTES
   ) {
-    return createJsonResponse(
+    return createResponse(
+      false,
+
+      "AVATAR_FILE_TOO_LARGE",
+
       {
-        ok:
-          false,
+        es:
+          "La imagen no puede superar los 10 MB.",
 
-        code:
-          "AVATAR_FILE_TOO_LARGE",
-
-        message: {
-          es:
-            "La imagen no puede superar los 5 MB.",
-
-          en:
-            "The image cannot exceed 5 MB.",
-        },
-
-        fieldErrors: {
-          avatar: [
-            "El tamaño máximo permitido es de 5 MB.",
-          ],
-        },
+        en:
+          "The image cannot exceed 10 MB.",
       },
+
       413,
     );
   }
 
   const declaredMimeType =
-    avatarField.type
-      .trim()
-      .toLowerCase();
+    normalizeMimeType(
+      avatarFile.type,
+    );
 
   if (
     !ALLOWED_MIME_TYPES.has(
       declaredMimeType,
     )
   ) {
-    return createJsonResponse(
+    return createResponse(
+      false,
+
+      "UNSUPPORTED_AVATAR_FORMAT",
+
       {
-        ok:
-          false,
+        es:
+          "La foto debe estar en formato JPG, PNG o WebP.",
 
-        code:
-          "UNSUPPORTED_AVATAR_FORMAT",
-
-        message: {
-          es:
-            "El avatar debe ser una imagen JPG, PNG o WebP.",
-
-          en:
-            "The avatar must be a JPG, PNG, or WebP image.",
-        },
-
-        fieldErrors: {
-          avatar: [
-            "Formato permitido: JPG, PNG o WebP.",
-          ],
-        },
+        en:
+          "The picture must be in JPG, PNG, or WebP format.",
       },
+
       415,
     );
   }
 
-  let avatarBytes:
+  let bytes:
     Uint8Array;
 
   try {
-    avatarBytes =
+    bytes =
       new Uint8Array(
-        await avatarField.arrayBuffer(),
+        await avatarFile.arrayBuffer(),
       );
   } catch {
-    return createJsonResponse(
+    return createResponse(
+      false,
+
+      "AVATAR_READ_FAILED",
+
       {
-        ok:
-          false,
+        es:
+          "No fue posible leer la imagen seleccionada.",
 
-        code:
-          "AVATAR_READ_FAILED",
-
-        message: {
-          es:
-            "No fue posible leer la imagen seleccionada.",
-
-          en:
-            "The selected image could not be read.",
-        },
+        en:
+          "The selected image could not be read.",
       },
+
       400,
     );
   }
 
-  const detectedAvatarType =
+  const detectedType =
     detectAvatarType(
-      avatarBytes,
+      bytes,
     );
 
   if (
-    !detectedAvatarType ||
-    detectedAvatarType.mimeType !==
+    !detectedType ||
+    detectedType.mimeType !==
       declaredMimeType
   ) {
-    return createJsonResponse(
+    return createResponse(
+      false,
+
+      "INVALID_AVATAR_FILE",
+
       {
-        ok:
-          false,
+        es:
+          "El archivo no contiene una imagen JPG, PNG o WebP válida.",
 
-        code:
-          "INVALID_AVATAR_FILE",
-
-        message: {
-          es:
-            "El archivo seleccionado no contiene una imagen válida.",
-
-          en:
-            "The selected file does not contain a valid image.",
-        },
-
-        fieldErrors: {
-          avatar: [
-            "El contenido del archivo no coincide con una imagen válida.",
-          ],
-        },
+        en:
+          "The file does not contain a valid JPG, PNG, or WebP image.",
       },
+
       415,
     );
   }
 
+  let savedFilePath:
+    string | null =
+      null;
+
   try {
-    const updateResult =
+    const currentProfile =
+      await getCurrentProfile(
+        sessionToken,
+      );
+
+    if (
+      !currentProfile
+    ) {
+      return createUnauthenticatedResponse(
+        true,
+      );
+    }
+
+    /*
+     * Crea automáticamente:
+     *
+     * public/uploads/avatars
+     */
+    await mkdir(
+      AVATAR_DIRECTORY,
+      {
+        recursive:
+          true,
+      },
+    );
+
+    const fileName =
+      createAvatarFileName(
+        currentProfile.id,
+        detectedType.extension,
+      );
+
+    savedFilePath =
+      path.join(
+        AVATAR_DIRECTORY,
+        fileName,
+      );
+
+    await writeFile(
+      savedFilePath,
+      bytes,
+      {
+        /*
+         * Evita reemplazar accidentalmente
+         * un archivo existente.
+         */
+        flag:
+          "wx",
+      },
+    );
+
+    const newAvatarUrl =
+      `${AVATAR_URL_PREFIX}${fileName}`;
+
+    /*
+     * El servicio de perfil sí espera avatarUrl.
+     * Este era el error del código anterior.
+     */
+    const result =
       await updateAvatarBySessionToken(
         sessionToken,
+
         {
-          bytes:
-            avatarBytes,
-
-          mimeType:
-            detectedAvatarType
-              .mimeType,
-
-          extension:
-            detectedAvatarType
-              .extension,
-
-          size:
-            avatarField.size,
+          avatarUrl:
+            newAvatarUrl,
         },
+
         {
           ipHash:
-            rateLimitResult
-              .identifierHash,
+            rateLimit.identifierHash,
 
           userAgent:
-            getSanitizedUserAgent(
+            getUserAgent(
               request,
             ),
         },
       );
 
     if (
-      !updateResult
+      result.status ===
+        "invalid-session" ||
+      result.status ===
+        "account-unavailable"
     ) {
-      const response =
-        createUnauthenticatedResponse();
-
-      clearSessionCookie(
-        response,
+      await deleteLocalAvatar(
+        newAvatarUrl,
       );
 
-      return response;
+      return createUnauthenticatedResponse(
+        true,
+      );
     }
 
-    const avatarData =
-      getAvatarResponseData(
-        updateResult,
-      );
+    /*
+     * La base ya contiene la URL nueva.
+     * Ahora se elimina la imagen anterior.
+     */
+    await deleteLocalAvatar(
+      currentProfile.avatarUrl,
+    );
 
-    return createJsonResponse(
+    return createResponse(
+      true,
+
+      "AVATAR_UPDATED",
+
       {
-        ok:
-          true,
+        es:
+          "Tu foto de perfil fue actualizada correctamente.",
 
-        code:
-          "AVATAR_UPDATED",
-
-        message: {
-          es:
-            "Tu avatar fue actualizado correctamente.",
-
-          en:
-            "Your avatar was updated successfully.",
-        },
-
-        data: {
-          avatarUrl:
-            avatarData.avatarUrl,
-
-          ...(avatarData.updatedAt
-            ? {
-                updatedAt:
-                  avatarData.updatedAt,
-              }
-            : {}),
-        },
+        en:
+          "Your profile picture was updated successfully.",
       },
+
       200,
+
+      {
+        avatarUrl:
+          result.profile.avatarUrl,
+
+        updatedAt:
+          result.profile.updatedAt.toISOString(),
+      },
     );
   } catch (
     error: unknown
   ) {
+    /*
+     * Si falló la base de datos después de
+     * crear el archivo, elimina el archivo nuevo.
+     */
+    if (
+      savedFilePath
+    ) {
+      try {
+        await unlink(
+          savedFilePath,
+        );
+      } catch {
+        /*
+         * El archivo pudo haber sido eliminado
+         * previamente.
+         */
+      }
+    }
+
     console.error(
       "FIXORA update avatar route error:",
       error,
     );
 
-    return createJsonResponse(
+    return createResponse(
+      false,
+
+      "AVATAR_UPDATE_UNAVAILABLE",
+
       {
-        ok:
-          false,
+        es:
+          "No fue posible actualizar la foto de perfil en este momento.",
 
-        code:
-          "AVATAR_UPDATE_UNAVAILABLE",
-
-        message: {
-          es:
-            "No fue posible actualizar el avatar en este momento.",
-
-          en:
-            "The avatar could not be updated at this time.",
-        },
+        en:
+          "The profile picture could not be updated at this time.",
       },
+
       503,
     );
   }
@@ -1120,8 +1050,8 @@ export async function POST(
 /*
  * DELETE /api/perfil/avatar
  *
- * Elimina el archivo actual y establece
- * avatarUrl como null.
+ * Elimina la imagen física y establece
+ * avatarUrl en null.
  */
 export async function DELETE(
   request:
@@ -1132,22 +1062,19 @@ export async function DELETE(
       request,
     )
   ) {
-    return createJsonResponse(
+    return createResponse(
+      false,
+
+      "UNTRUSTED_ORIGIN",
+
       {
-        ok:
-          false,
+        es:
+          "La solicitud no proviene de un origen autorizado.",
 
-        code:
-          "UNTRUSTED_ORIGIN",
-
-        message: {
-          es:
-            "La solicitud no proviene de un origen autorizado.",
-
-          en:
-            "The request does not come from an authorized origin.",
-        },
+        en:
+          "The request does not come from an authorized origin.",
       },
+
       403,
     );
   }
@@ -1163,7 +1090,7 @@ export async function DELETE(
     return createUnauthenticatedResponse();
   }
 
-  const rateLimitResult =
+  const rateLimit =
     await checkRateLimit({
       request,
 
@@ -1180,107 +1107,80 @@ export async function DELETE(
     });
 
   if (
-    !rateLimitResult.allowed
+    !rateLimit.allowed
   ) {
-    const retryAfterSeconds =
-      normalizeRetryAfterSeconds(
-        rateLimitResult
-          .retryAfterSeconds,
-      );
-
-    return createJsonResponse(
-      {
-        ok:
-          false,
-
-        code:
-          "RATE_LIMITED",
-
-        message: {
-          es:
-            "Se realizaron demasiadas solicitudes. Inténtalo nuevamente más tarde.",
-
-          en:
-            "Too many requests were made. Please try again later.",
-        },
-
-        data: {
-          retryAfterSeconds,
-        },
-      },
-      429,
-      {
-        "Retry-After":
-          String(
-            retryAfterSeconds,
-          ),
-      },
+    return createRateLimitResponse(
+      rateLimit
+        .retryAfterSeconds,
     );
   }
 
   try {
-    const removeResult =
+    const currentProfile =
+      await getCurrentProfile(
+        sessionToken,
+      );
+
+    if (
+      !currentProfile
+    ) {
+      return createUnauthenticatedResponse(
+        true,
+      );
+    }
+
+    const result =
       await removeAvatarBySessionToken(
         sessionToken,
+
         {
           ipHash:
-            rateLimitResult
-              .identifierHash,
+            rateLimit.identifierHash,
 
           userAgent:
-            getSanitizedUserAgent(
+            getUserAgent(
               request,
             ),
         },
       );
 
     if (
-      !removeResult
+      result.status ===
+        "invalid-session" ||
+      result.status ===
+        "account-unavailable"
     ) {
-      const response =
-        createUnauthenticatedResponse();
-
-      clearSessionCookie(
-        response,
+      return createUnauthenticatedResponse(
+        true,
       );
-
-      return response;
     }
 
-    const avatarData =
-      getAvatarResponseData(
-        removeResult,
-      );
+    await deleteLocalAvatar(
+      currentProfile.avatarUrl,
+    );
 
-    return createJsonResponse(
+    return createResponse(
+      true,
+
+      "AVATAR_REMOVED",
+
       {
-        ok:
-          true,
+        es:
+          "Tu foto de perfil fue eliminada correctamente.",
 
-        code:
-          "AVATAR_REMOVED",
-
-        message: {
-          es:
-            "Tu avatar fue eliminado correctamente.",
-
-          en:
-            "Your avatar was removed successfully.",
-        },
-
-        data: {
-          avatarUrl:
-            null,
-
-          ...(avatarData.updatedAt
-            ? {
-                updatedAt:
-                  avatarData.updatedAt,
-              }
-            : {}),
-        },
+        en:
+          "Your profile picture was removed successfully.",
       },
+
       200,
+
+      {
+        avatarUrl:
+          null,
+
+        updatedAt:
+          result.profile.updatedAt.toISOString(),
+      },
     );
   } catch (
     error: unknown
@@ -1290,22 +1190,19 @@ export async function DELETE(
       error,
     );
 
-    return createJsonResponse(
+    return createResponse(
+      false,
+
+      "AVATAR_REMOVE_UNAVAILABLE",
+
       {
-        ok:
-          false,
+        es:
+          "No fue posible eliminar la foto de perfil en este momento.",
 
-        code:
-          "AVATAR_REMOVE_UNAVAILABLE",
-
-        message: {
-          es:
-            "No fue posible eliminar el avatar en este momento.",
-
-          en:
-            "The avatar could not be removed at this time.",
-        },
+        en:
+          "The profile picture could not be removed at this time.",
       },
+
       503,
     );
   }

@@ -12,6 +12,7 @@ import {
   useState,
 } from "react";
 
+import { useAuth } from "@/hooks/auth/useAuth";
 import useLanguage from "@/hooks/language/useLanguage";
 
 interface ProfileData {
@@ -72,7 +73,7 @@ interface AvatarApiData {
 }
 
 const MAX_AVATAR_SIZE_BYTES =
-  5 * 1024 * 1024;
+  10 * 1024 * 1024;
 
 const PROFILE_COPY = {
   es: {
@@ -98,7 +99,7 @@ const PROFILE_COPY = {
       "Foto de perfil",
 
     avatarDescription:
-      "Puedes utilizar una imagen JPG, PNG o WebP de hasta 5 MB.",
+      "Puedes utilizar una imagen JPG, PNG o WebP de hasta 10 MB.",
 
     uploadAvatar:
       "Subir imagen",
@@ -182,7 +183,7 @@ const PROFILE_COPY = {
       "Selecciona una imagen JPG, PNG o WebP válida.",
 
     avatarTooLarge:
-      "La imagen no puede superar los 5 MB.",
+      "La imagen no puede superar los 10 MB.",
 
     sessionExpired:
       "Tu sesión venció. Debes iniciar sesión nuevamente.",
@@ -223,7 +224,7 @@ const PROFILE_COPY = {
       "Profile picture",
 
     avatarDescription:
-      "You can use a JPG, PNG, or WebP image up to 5 MB.",
+      "You can use a JPG, PNG, or WebP image up to 10 MB.",
 
     uploadAvatar:
       "Upload image",
@@ -307,7 +308,7 @@ const PROFILE_COPY = {
       "Select a valid JPG, PNG, or WebP image.",
 
     avatarTooLarge:
-      "The image cannot exceed 5 MB.",
+      "The image cannot exceed 10 MB.",
 
     sessionExpired:
       "Your session expired. You must sign in again.",
@@ -410,6 +411,10 @@ function createFormState(
 export default function ProfilePage() {
   const router =
     useRouter();
+
+  const {
+    updateUser,
+  } = useAuth();
 
   const {
     language,
@@ -835,6 +840,32 @@ export default function ProfilePage() {
           ),
         );
 
+        updateUser({
+          firstName:
+            updatedProfile.firstName,
+
+          lastName:
+            updatedProfile.lastName,
+
+          displayName:
+            updatedProfile.displayName,
+
+          preferredLanguage:
+            updatedProfile.preferredLanguage ===
+            "en"
+              ? "en"
+              : "es",
+
+          preferredTheme:
+            updatedProfile.preferredTheme ===
+            "dark"
+              ? "dark"
+              : "light",
+
+          updatedAt:
+            updatedProfile.updatedAt,
+        });
+
         setSuccessMessage(
           copy.changesSaved,
         );
@@ -996,6 +1027,14 @@ export default function ProfilePage() {
           },
         );
 
+        updateUser({
+          avatarUrl:
+            avatarData.avatarUrl,
+
+          updatedAt:
+            avatarData.updatedAt,
+        });
+
         setSuccessMessage(
           copy.avatarUpdated,
         );
@@ -1106,6 +1145,17 @@ export default function ProfilePage() {
           },
         );
 
+        updateUser({
+          avatarUrl:
+            null,
+
+          ...(updatedAt
+            ? {
+                updatedAt,
+              }
+            : {}),
+        });
+
         setSuccessMessage(
           copy.avatarRemoved,
         );
@@ -1180,7 +1230,7 @@ export default function ProfilePage() {
     isRemovingAvatar;
 
   return (
-    <main className="min-h-screen px-4 py-10 sm:px-6 lg:px-8">
+    <main className="min-h-screen px-4 pb-10 pt-32 sm:px-6 sm:pb-12 sm:pt-36 lg:px-8">
       <div className="mx-auto w-full max-w-6xl">
         <header className="mb-8">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-600">
