@@ -882,7 +882,7 @@ export default function NotificationsPage() {
     selectedType !== "";
 
   return (
-    <main className="min-h-screen px-4 py-10 sm:px-6 lg:px-8">
+   <main className="min-h-screen px-4 pb-10 pt-32 sm:px-6 sm:pb-12 sm:pt-36 lg:px-8">
       <div className="mx-auto w-full max-w-5xl">
         <header className="flex flex-col gap-5 border-b border-black/10 pb-7 dark:border-white/10 sm:flex-row sm:items-end sm:justify-between">
           <div>
